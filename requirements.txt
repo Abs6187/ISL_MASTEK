@@ -5,8 +5,11 @@ mediapipe
 numpy
 gTTS
 pygame
-SpeechRecognition
+# SpeechRecognition  # Requires microphone access - only for local development
 flask
 flask-cors
-pyaudio
+# pyaudio  # Requires system dependencies - only for local development
 scikit-learn
+
+# Note: For local development with speech features, install separately:
+# pip install pyaudio SpeechRecognition
