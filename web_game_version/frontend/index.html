@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Signify</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="css/index.css">
+</head>
+
+<body>
+
+  <!-- Navbar -->
+  <div class="container">
+    <header class="d-flex justify-content-center py-3">
+      <ul class="nav nav-pills">
+        <li class="nav-item"><a href="index.html" class="nav-link active"
+            style="background-color: rgb(37, 35, 33);">Home</a></li>
+        <li class="nav-item"><a href="examples.html" class="nav-link">Examples</a></li>
+        <li class="nav-item"><a href="contact.html" class="nav-link">Contact us</a></li>
+        <li class="nav-item"><a href="faqs.html" class="nav-link">FAQs</a></li>
+        <li class="nav-item"><a href="about.html" class="nav-link">About us</a></li>
+      </ul>
+    </header>
+  </div>
+
+  <!-- Hand Signs -->
+  <div class="icon-arc text-center">
+    <img src="svg/hs1.svg" class="arc-icon left-arc" alt="HS1">
+    <img src="svg/hs2.svg" class="arc-icon center-left" alt="HS2">
+    <img src="svg/hs3.svg" class="arc-icon center-right" alt="HS3">
+    <img src="svg/hs4.svg" class="arc-icon right-arc" alt="HS4">
+  </div>
+
+  <!-- Title -->
+  <div class="text-center mt-4">
+    <h1 class="game-title animated-title">Learn Indian Sign Language</h1>
+  </div>
+
+  <!-- Buttons -->
+  <div class="d-flex justify-content-center flex-wrap my-4 gap-3">
+    <a href="learn.html" class="game-button btn"><img class="icon" src="svg/learnbuttonSVG.svg"> Learn</a>
+    <a href="qm.html" class="game-button btn"><img class="icon" src="svg/learnbuttonSVG.svg"> Quiz</a>
+    <a href="mode.html" class="game-button btn"><img class="icon" src="svg/playbuttonSVG.svg"> Play</a>
+  </div>
+
+  <!-- Leaderboards -->
+  <div class="container mt-5">
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <div class="leaderboard-box">
+          <h3 class="text-warning">🏆 Word Scramble Leaderboard</h3>
+          <table class="table table-dark table-striped">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Name</th>
+                <th>Score</th>
+                <th>Category</th>
+              </tr>
+            </thead>
+            <tbody id="scramble-leaderboard-body">
+              <tr>
+                <td colspan="4">No data available</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="col-md-6 mb-4">
+        <div class="leaderboard-box">
+          <h3 class="text-warning">🧠 Quiz Leaderboard</h3>
+          <table class="table table-dark table-striped">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Name</th>
+                <th>Score</th>
+
+              </tr>
+            </thead>
+            <tbody id="quiz-leaderboard-body">
+              <tr>
+                <td colspan="3">No data available</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/index.js"></script>
+</body>
+
+</html>

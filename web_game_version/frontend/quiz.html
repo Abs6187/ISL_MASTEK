@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign Language Quiz</title>
+  <link rel="stylesheet" href="css/quiz.css">
+</head>
+
+<body>
+
+  <button id="home-btn">🏡 Home</button>
+
+  <div id="quiz-container">
+    <header>
+      <h1>🧠 Sign Language Quiz</h1>
+    </header>
+
+    <div id="main-content">
+      <div id="left-side">
+        <div id="player-info">
+          <div class="info-box" id="player-name">👤 Player: </div>
+          <div class="info-box" id="score">⭐ Points: 0</div>
+          <div class="info-box" id="streak">🔥 Streak: 0</div>
+          <div class="info-box" id="time-left">⏳ Time: 30s</div>
+        </div>
+
+        <div id="question-section">
+          <p id="question-text">Click Start to begin the quiz</p>
+          <div id="current-letter"></div>
+          <div id="video-box">
+            <video id="webcam" autoplay playsinline></video>
+            <img id="sign-image" src="" alt="Sign Image" />
+          </div>
+          <input id="letter-input" type="text" maxlength="1" placeholder="Enter answer" />
+        </div>
+
+        <div id="control-buttons">
+          <button id="start-btn">▶️ Start</button>
+          <button id="quit-btn" disabled>❌ Quit</button>
+        </div>
+
+        <div id="result-popup" class="hidden">
+          <h2 id="final-message"></h2>
+          <button id="close-popup-btn">Close</button>
+        </div>
+      </div>
+
+      <div id="right-side">
+        <div id="leaderboard">
+          <h2>🏆 Leaderboard</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Name</th>
+                <th>Points</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboard-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/quiz.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,125 @@
+@import url('https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Press+Start+2P&display=swap');
+
+body {
+  margin: 0;
+  font-family: 'Luckiest Guy', cursive;
+  background: linear-gradient(135deg, #ff9a9e, #fad0c4, #fad0c4, #fbc2eb, #a18cd1);
+  color: white;
+  overflow: hidden;
+}
+
+.main-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+
+.content-wrapper {
+  text-align: center;
+  animation: fadeIn 1s ease-in-out;
+}
+
+.page-title {
+  font-family: 'Luckiest Guy', cursive;
+  font-size: 3rem;
+  color: #fff;
+  text-shadow: 2px 2px 0 #000;
+  margin-bottom: 40px;
+}
+
+.name-box {
+  margin-bottom: 40px;
+}
+
+.name-box h2 {
+  color: #222;
+  margin-bottom: 30px;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.name-box input {
+  padding: 14px 24px;
+  font-size: 1.2rem;
+  border: 2px solid #fff;
+  border-radius: 10px;
+  outline: none;
+  width: 300px;
+  background: #fff;
+  color: #333;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.error-msg {
+  color:  rgb(2, 14, 32);;
+  margin-top: 10px;
+  font-size: 1rem;
+}
+
+.container {
+  display: flex;
+  justify-content: center;
+}
+
+.mode-button {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #fff;
+  background: linear-gradient(to top, #ffcc00, #ff9900);
+  border: 3px solid #fff;
+  border-radius: 40px;
+  padding: 15px 40px;
+  text-decoration: none;
+  box-shadow: 0 6px 0 #cc6600;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  font-family: 'Luckiest Guy', cursive;
+}
+
+.mode-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 9px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  0% { opacity: 0; transform: translateY(40px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  50% { transform: translateX(8px); }
+  75% { transform: translateX(-8px); }
+}
+
+.shake {
+  animation: shake 0.4s ease;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .mode-button {
+    width: 80%;
+    font-size: 1.5rem;
+  }
+
+  .name-box input {
+    width: 80%;
+  }
+
+  .page-title {
+    font-size: 2.2rem;
+  }
+
+  .name-box h2 {
+    font-size: 0.8rem;
+  }
+}
+@keyframes gradientFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}

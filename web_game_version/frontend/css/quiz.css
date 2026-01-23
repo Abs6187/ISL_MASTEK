@@ -1,0 +1,277 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap');
+body {
+  margin: 0;
+  font-family: 'Fredoka One', cursive;
+background: linear-gradient(to bottom right, #f6d365, #fda085); /* Warm yellow to soft orange */
+  background-size: 500% 500%;
+  animation: gradientFlow 20s ease infinite;
+  color: #222;
+  padding: 20px;
+}
+
+#webcam {
+  transform: scaleX(-1);
+}
+
+#quiz-container {
+  max-width: 1200px;
+  margin: auto;
+}
+
+header h1 {
+  font-size: 2.5rem;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+#main-content {
+  display: flex;
+  justify-content: space-between;
+}
+
+#left-side {
+  flex: 1.2;
+  padding-right: 30px;
+}
+
+#right-side {
+  flex: 0.8;
+  margin-top: 10px;
+}
+
+#player-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.info-box {
+  background: #243b55;
+  padding: 10px 15px;
+  border-radius: 8px;
+  font-size: 1.3rem;
+}
+
+#question-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#question-text {
+  font-size: 1.8rem;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+#current-letter {
+  font-size: 2rem;
+  margin-bottom: 15px;
+  font-weight: bold;
+}
+
+.correct-flash {
+  color: #00ff88;
+  text-shadow: 0 0 10px #00ff88;
+}
+
+.wrong-flash {
+  animation: shake 0.3s ease;
+  color: #ff4d4d;
+  text-shadow: 0 0 10px #ff4d4d;
+}
+
+@keyframes shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  50% { transform: translateX(5px); }
+  75% { transform: translateX(-5px); }
+  100% { transform: translateX(0); }
+}
+
+#video-box {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  height: 360px;
+  margin: 0 auto 20px;
+  border: 4px solid white;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+#video-box video,
+#video-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: none;
+}
+
+#video-box video.active,
+#video-box img.active {
+  display: block;
+}
+
+#letter-input {
+  padding: 12px;
+  font-size: 1.5rem;
+  width: 200px;
+  border-radius: 10px;
+  border: none;
+  text-align: center;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: white;
+  color: black;
+  margin-top: 10px;
+  caret-color: black;
+}
+
+/* 🔥 Button Row Fix */
+#control-buttons {
+  margin-top: 10px;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+#control-buttons button,
+#close-popup-btn {
+  padding: 12px 25px;
+  font-size: 1.1rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  background-color: #1c1c1c;
+  color: white;
+  transition: 0.2s ease;
+}
+
+#control-buttons button:hover,
+#close-popup-btn:hover {
+  transform: scale(1.05);
+  background-color: #0077aa;
+}
+
+/* 🔴 Quit Button Color Change */
+#quit-btn {
+  background-color: #000;
+  color: white;
+}
+
+#quit-btn:hover {
+  background-color: red;
+}
+
+#result-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #000;
+  padding: 25px 30px;
+  border-radius: 15px;
+  z-index: 999;
+  text-align: center;
+  box-shadow: 0 0 20px #000;
+  color: white;
+}
+
+#result-popup.hidden {
+  display: none;
+}
+
+#leaderboard {
+  background: rgba(0,0,0,0.3);
+  padding: 20px;
+  border-radius: 12px;
+  margin-top: 10px;
+  max-height: none;
+  overflow: visible;
+}
+
+#leaderboard table {
+  width: 100%;
+  border-collapse: collapse;
+  color: white;
+}
+
+#leaderboard th,
+#leaderboard td {
+  padding: 10px;
+  border-bottom: 1px solid #ccc;
+  text-align: center;
+  width: auto;
+}
+
+
+#leaderboard th {
+  font-size: 1.2rem;
+  color: #ffd700;
+}
+
+#home-btn {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  font-size: 1.5rem;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 8px;
+  background-color: #1c1c1c;
+  color: white;
+  z-index: 999;
+  cursor: pointer;
+}
+
+#home-btn:hover {
+  background-color: #0077aa;
+}
+
+.highlighted {
+  background-color: rgba(255, 255, 0, 0.3);
+  transition: background-color 0.5s ease;
+}
+
+@keyframes moveUp {
+  from {
+    transform: translateY(100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.game-title {
+  animation: moveUp 1.2s ease-out;
+}
+
+@keyframes gradientFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+#play-again-btn {
+  display: none;
+  font-family: 'Fredoka One', cursive;
+  padding: 12px 25px;
+  font-size: 1.2rem;
+  background-color: #1c1c1c;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  transition: 0.2s ease;
+  text-align: center;
+}
+
+#play-again-btn:hover {
+  background-color: #0077aa;
+  transform: scale(1.05);
+}

@@ -1,0 +1,70 @@
+@import url('https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap');
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Luckiest Guy', cursive;
+  background: linear-gradient(135deg, #1c1a29, #c90ebf);
+  color: white;
+}
+
+/* Hand signs arc */
+.icon-arc {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+}
+
+.arc-icon {
+  width: 100px;
+  height: auto;
+}
+
+/* Title Animation */
+.animated-title {
+  font-size: 3.5rem;
+  color: #ffcc00;
+  text-shadow: 3px 3px 0 #cc6600, 6px 6px 0 #333;
+  animation: floatTitle 2s infinite ease-in-out;
+}
+
+@keyframes floatTitle {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0); }
+}
+
+/* Buttons */
+.game-button {
+  display: inline-block;
+  font-size: 2rem;
+  font-weight: bold;
+  color: #fff;
+  background: linear-gradient(to top, #ffcc00, #ff9900);
+  border: 3px solid #fff;
+  border-radius: 40px;
+  padding: 15px 40px;
+  text-decoration: none;
+  box-shadow: 0 6px 0 #cc6600;
+  transition: transform 0.2s ease;
+  font-family: 'Luckiest Guy', cursive;
+}
+
+.game-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 9px 15px rgba(0, 0, 0, 0.2);
+}
+
+.icon {
+  height: 50px;
+  margin-right: 10px;
+}
+
+/* Leaderboards */
+.leaderboard-box {
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 0 10px black; 
+}

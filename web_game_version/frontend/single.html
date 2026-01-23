@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Single Player</title>
+  <link rel="stylesheet" href="css/single.css" />
+</head>
+
+<body>
+  <div class="main-wrapper">
+    <div class="game-section">
+      <h1 class="title">🧩 Unscramble the Word</h1>
+
+      <div class="difficulty-box">
+        <label for="category"> Select Category:</label>
+        <select id="category" class="custom-dropdown">
+          <option value="general">General</option>
+          <option value="social">Social Media</option>
+          <option value="sports">Sports</option>
+          <option value="tech">Tech</option>
+          <option value="math">Math</option>
+        </select>
+        <p id="difficulty-lock-msg">To change category, end the current game and start again.</p>
+      </div>
+
+      <button id="start-btn">▶️ Start Game</button>
+
+      <div class="jumble-box">
+        <span class="label">Jumbled Word:</span>
+        <div id="scrambled-word">LOADING...</div>
+      </div>
+
+      <p class="hint"> Loading hint...</p>
+      <p id="current-instruction">✋ Show hand sign for: <span id="current-letter">_</span></p>
+      <div id="answer-line">_ _ _ _ _</div>
+      <div id="timer">⏳ Time Left: <span id="time-left">60</span>s</div>
+
+      <div class="scoreboard">
+        <span id="player-name">👤 Name: Unknown</span>
+        <span id="score">⭐ Score: 0</span>
+        <span id="streak">🔥 Streak: 0</span>
+      </div>
+
+      <video id="webcam" autoplay playsinline></video>
+
+      <div class="action-buttons">
+        <button id="quit-btn">QUIT</button>
+        <button id="inline-play-again-btn">🔁 Play Again</button>
+      </div>
+    </div>
+
+    <div class="leaderboard-section">
+      <h2>🏆 Leaderboard</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Name</th>
+            <th>Points</th>
+            <th>Category</th>
+          </tr>
+        </thead>
+        <tbody id="leaderboard-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="result-popup" class="popup hidden">
+    <div class="popup-content">
+      <h2>🎮 Game Over</h2>
+      <p id="final-message"></p>
+      <button id="close-popup-btn">Close</button>
+    </div>
+  </div>
+  <button id="home-btn" style="display: none;">🏡 Home</button>
+
+  <script src="js/ai_helper.js"></script>
+  <script src="js/sound_manager.js"></script>
+  <script src="js/single.js"></script>
+</body>
+
+</html>

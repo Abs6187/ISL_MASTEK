@@ -1,0 +1,12 @@
+streamlit
+streamlit-elements==0.1.*
+opencv-python-headless
+mediapipe
+numpy
+gTTS
+pygame
+SpeechRecognition
+flask
+flask-cors
+pyaudio
+scikit-learn
