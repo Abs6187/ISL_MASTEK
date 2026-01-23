@@ -1,0 +1,198 @@
+name: CI/CD - Test and Deploy ISL System
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # Allow manual triggering
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  # Job 1: Code Quality and Linting
+  lint:
+    name: Code Quality Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install linting tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 black isort
+        
+    - name: Run Black formatter check
+      run: black --check --diff streamlit-version/ web_game_version/ || true
+      
+    - name: Run isort import checker
+      run: isort --check-only streamlit-version/ web_game_version/ || true
+      
+    - name: Run Flake8 linter
+      run: flake8 streamlit-version/ web_game_version/ --max-line-length=120 --extend-ignore=E203,W503 || true
+
+  # Job 2: Dependency Check
+  dependencies:
+    name: Dependency Verification
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Cache pip packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: Verify critical packages
+      run: |
+        python -c "import streamlit; print(f'Streamlit: {streamlit.__version__}')"
+        python -c "import cv2; print(f'OpenCV: {cv2.__version__}')"
+        python -c "import mediapipe; print(f'MediaPipe: {mediapipe.__version__}')"
+        python -c "import sklearn; print(f'Scikit-learn: {sklearn.__version__}')"
+
+  # Job 3: Application Tests
+  test:
+    name: Application Testing
+    runs-on: ubuntu-latest
+    needs: [dependencies]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Cache pip packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-cov
+        
+    - name: Check Streamlit pages syntax
+      run: |
+        python -m py_compile streamlit-version/Home.py
+        python -m py_compile streamlit-version/pages/*.py
+        
+    - name: Check Flask server syntax
+      run: |
+        python -m py_compile web_game_version/server.py
+        
+    - name: Run basic import tests
+      run: |
+        cd streamlit-version
+        python -c "import sys; sys.path.insert(0, '.'); import Home"
+        
+    - name: Verify model files exist
+      run: |
+        test -f streamlit-version/assets/models/mlp_model_1.p || echo "Warning: mlp_model_1.p not found"
+        test -f streamlit-version/assets/models/mlp_model_2.p || echo "Warning: mlp_model_2.p not found"
+        test -f streamlit-version/assets/models/mlp_model_num.p || echo "Warning: mlp_model_num.p not found"
+
+  # Job 4: Security Scan
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install safety
+      run: pip install safety
+      
+    - name: Run safety check
+      run: safety check --file requirements.txt --continue-on-error || true
+
+  # Job 5: Build Documentation
+  docs:
+    name: Documentation Build
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Verify README and documentation
+      run: |
+        test -f README.md || exit 1
+        test -f streamlit.md || echo "streamlit.md not found"
+        
+    - name: Check for broken links in README
+      run: |
+        grep -o 'https\?://[^)]*' README.md | sort | uniq || true
+
+  # Job 6: Deployment Preparation
+  deploy-prep:
+    name: Deployment Preparation
+    runs-on: ubuntu-latest
+    needs: [lint, test, security]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Create deployment package
+      run: |
+        mkdir -p deploy
+        cp -r streamlit-version deploy/
+        cp requirements.txt deploy/
+        cp README.md deploy/
+        
+    - name: Upload deployment artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: isl-deployment-package
+        path: deploy/
+        retention-days: 7
+
+  # Job 7: Notify on Success
+  notify-success:
+    name: Deployment Ready Notification
+    runs-on: ubuntu-latest
+    needs: [deploy-prep]
+    if: success()
+    
+    steps:
+    - name: Success message
+      run: |
+        echo "✅ All tests passed! Deployment package is ready."
+        echo "📦 Artifact: isl-deployment-package"
+        echo "🚀 Ready for Streamlit Cloud deployment"

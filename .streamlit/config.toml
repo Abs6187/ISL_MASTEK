@@ -1,0 +1,22 @@
+# Streamlit Cloud Configuration
+# Visit: https://share.streamlit.io to deploy
+
+[general]
+email = ""  # Your email for Streamlit Cloud
+
+[server]
+headless = true
+port = 8501
+enableCORS = false
+enableXsrfProtection = true
+
+[browser]
+gatherUsageStats = false
+serverAddress = "0.0.0.0"
+
+[theme]
+primaryColor = "#5E35B1"
+backgroundColor = "#0E1117"
+secondaryBackgroundColor = "#262730"
+textColor = "#FAFAFA"
+font = "sans serif"
