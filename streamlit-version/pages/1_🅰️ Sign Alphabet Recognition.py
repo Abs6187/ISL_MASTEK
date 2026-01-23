@@ -51,8 +51,13 @@ st.markdown("""
 
 run = st.checkbox("Start Camera")
 
-# Initialize pygame mixer for non-blocking audio playback
-pygame.mixer.init()
+# Initialize pygame mixer for non-blocking audio playback (optional for cloud)
+try:
+    pygame.mixer.init()
+    AUDIO_AVAILABLE = True
+except:
+    AUDIO_AVAILABLE = False
+    st.info("ℹ️ Audio playback not available in cloud deployment. Running in silent mode.")
 
 # Load pre-trained models
 model_path_42 = os.path.join(os.path.dirname(__file__), '..', 'assets', 'models', 'mlp_model_1.p')
@@ -77,22 +82,26 @@ labels_dict_84 = {0: 'A', 1: 'B', 2: 'D', 3: 'E', 4: 'F', 5: 'G', 6: 'H', 7: 'J'
 def speak(text):
     """
     Converts text to speech using Google Text-to-Speech (gTTS) and plays it.
+    Silently fails if audio device is not available (cloud deployment).
 
     Args:
         text (str): The text to be spoken.
         
     Example:
-        speak("A")  # Plays audio "A"
+        speak("A")  # Plays audio "A" if audio available
     """
-    if text:
-        tts = gTTS(text=text, lang='en')
-        audio_fp = BytesIO()
-        tts.write_to_fp(audio_fp)
-        audio_fp.seek(0)
+    if text and AUDIO_AVAILABLE:
+        try:
+            tts = gTTS(text=text, lang='en')
+            audio_fp = BytesIO()
+            tts.write_to_fp(audio_fp)
+            audio_fp.seek(0)
 
-        # Play audio using pygame (non-blocking)
-        pygame.mixer.music.load(audio_fp, "mp3")
-        pygame.mixer.music.play()
+            # Play audio using pygame (non-blocking)
+            pygame.mixer.music.load(audio_fp, "mp3")
+            pygame.mixer.music.play()
+        except:
+            pass  # Silently fail if audio playback doesn't work
 
 # Placeholder for video frame
 frame_window = st.empty()

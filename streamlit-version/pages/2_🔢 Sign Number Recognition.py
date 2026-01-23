@@ -51,9 +51,13 @@ st.markdown("""
 
 run = st.checkbox("Start Camera")
 
-
-# Initialize pygame mixer for non-blocking audio playback
-pygame.mixer.init()
+# Initialize pygame mixer for non-blocking audio playback (optional for cloud)
+try:
+    pygame.mixer.init()
+    AUDIO_AVAILABLE = True
+except:
+    AUDIO_AVAILABLE = False
+    st.info("ℹ️ Audio playback not available in cloud deployment. Running in silent mode.")
 
 # Load the pre-trained model
 model_path = os.path.join(os.path.dirname(__file__), '..', 'assets', 'models', 'mlp_model_num.p')
@@ -71,15 +75,18 @@ labels_dict = {0: '1', 1: '2', 2: '3', 3: '4', 4: '5', 5: '6', 6: '7', 7: '8', 8
 
 # Function to speak the text
 def speak(text):
-    if text:
-        tts = gTTS(text=text, lang='en')
-        audio_fp = BytesIO()
-        tts.write_to_fp(audio_fp)
-        audio_fp.seek(0)
+    if text and AUDIO_AVAILABLE:
+        try:
+            tts = gTTS(text=text, lang='en')
+            audio_fp = BytesIO()
+            tts.write_to_fp(audio_fp)
+            audio_fp.seek(0)
 
-        # Play audio using pygame (non-blocking)
-        pygame.mixer.music.load(audio_fp, "mp3")
-        pygame.mixer.music.play()
+            # Play audio using pygame (non-blocking)
+            pygame.mixer.music.load(audio_fp, "mp3")
+            pygame.mixer.music.play()
+        except:
+            pass  # Silently fail if audio playback doesn't work
 
 # Placeholder for video
 frame_placeholder = st.empty()
