@@ -1,0 +1,18 @@
+# Alternative requirements for cloud deployment (Streamlit Cloud, Heroku, etc.)
+# Use this file if you encounter PyAudio build issues in cloud environments
+
+streamlit
+streamlit-elements==0.1.*
+opencv-python-headless
+mediapipe
+numpy
+gTTS
+# pygame  # Optional for local audio playback
+# SpeechRecognition  # Requires PyAudio, optional for cloud
+# pyaudio  # Requires system dependencies, not needed for cloud
+flask
+flask-cors
+scikit-learn
+
+# Note: PyAudio and SpeechRecognition features won't work in cloud deployments
+# as they require microphone access. These are primarily for local development.

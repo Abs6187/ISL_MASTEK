@@ -12,6 +12,8 @@ RUN apt-get update && apt-get install -y \
     git \
     libgl1-mesa-glx \
     libglib2.0-0 \
+    portaudio19-dev \
+    python3-pyaudio \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
