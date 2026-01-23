@@ -3,6 +3,9 @@
 
 streamlit
 streamlit-elements==0.1.*
+streamlit-webrtc  # Browser-based camera access for cloud deployment
+aiortc  # WebRTC implementation
+av  # PyAV for video frame processing
 opencv-python-headless
 mediapipe
 numpy
@@ -16,3 +19,4 @@ scikit-learn
 
 # Note: PyAudio and SpeechRecognition features won't work in cloud deployments
 # as they require microphone access. These are primarily for local development.
+# Browser camera access via WebRTC (streamlit-webrtc) works perfectly in cloud!

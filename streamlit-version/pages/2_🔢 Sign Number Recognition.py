@@ -4,10 +4,20 @@ import cv2
 import mediapipe as mp
 import numpy as np
 import os
+import sys
+import warnings
+from streamlit_webrtc import webrtc_streamer, VideoProcessorBase
+import av
 import time
-import pygame
-from io import BytesIO
-from gtts import gTTS
+
+# Suppress warnings
+warnings.filterwarnings('ignore', category=UserWarning)
+warnings.filterwarnings('ignore', message='.*InconsistentVersionWarning.*')
+
+# Add utils to path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+from utils.webrtc_utils import RTC_CONFIGURATION, MEDIA_STREAM_CONSTRAINTS
+from utils.browser_tts import speak_text
 
 st.set_page_config(page_title="Real-Time Sign Number Detection", page_icon="🖐️", layout="wide")
 
@@ -42,151 +52,195 @@ st.markdown("""
             background: linear-gradient(135deg, #4527A0 0%, #303F9F 100%);
             transform: translateY(-1px);
         }
+        .prediction-box {
+            background: linear-gradient(145deg, #1E1E1E 0%, #262730 100%);
+            border: 2px solid #00BCD4;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .prediction-text {
+            font-size: 48px;
+            font-weight: bold;
+            color: #4FC3F7;
+        }
     </style>
     <h1 style="text-align: center;">🖐️ Real-Time Sign Number to Speech Translation</h1>
     <p style="text-align: center;">
-        This feature translates sign language numbers into speech in real-time, helping non-signers understand numeric gestures made by user.
+        Using browser camera via WebRTC - works in cloud deployment!
     </p>
     """, unsafe_allow_html=True)
-
-run = st.checkbox("Start Camera")
-
-# Initialize pygame mixer for non-blocking audio playback (optional for cloud)
-try:
-    pygame.mixer.init()
-    AUDIO_AVAILABLE = True
-except:
-    AUDIO_AVAILABLE = False
-    st.info("ℹ️ Audio playback not available in cloud deployment. Running in silent mode.")
 
 # Load the pre-trained model
 model_path = os.path.join(os.path.dirname(__file__), '..', 'assets', 'models', 'mlp_model_num.p')
 model_dict = pickle.load(open(model_path, 'rb'))
 model = model_dict['model']
 
-# MediaPipe Hands setup
-mp_hands = mp.solutions.hands
-mp_drawing = mp.solutions.drawing_utils
-mp_drawing_styles = mp.solutions.drawing_styles
-hands = mp_hands.Hands(static_image_mode=False, min_detection_confidence=0.3, min_tracking_confidence=0.5)
+# MediaPipe Hands setup (handle both old and new API versions)
+try:
+    mp_hands = mp.solutions.hands
+    mp_drawing = mp.solutions.drawing_utils
+    mp_drawing_styles = mp.solutions.drawing_styles
+except AttributeError:
+    import mediapipe.python.solutions.hands as mp_hands
+    import mediapipe.python.solutions.drawing_utils as mp_drawing
+    import mediapipe.python.solutions.drawing_styles as mp_drawing_styles
 
 # Labels dictionary for gestures
 labels_dict = {0: '1', 1: '2', 2: '3', 3: '4', 4: '5', 5: '6', 6: '7', 7: '8', 8: '9', 9: '0'}
 
-# Function to speak the text
-def speak(text):
-    if text and AUDIO_AVAILABLE:
-        try:
-            tts = gTTS(text=text, lang='en')
-            audio_fp = BytesIO()
-            tts.write_to_fp(audio_fp)
-            audio_fp.seek(0)
 
-            # Play audio using pygame (non-blocking)
-            pygame.mixer.music.load(audio_fp, "mp3")
-            pygame.mixer.music.play()
-        except:
-            pass  # Silently fail if audio playback doesn't work
-
-# Placeholder for video
-frame_placeholder = st.empty()
-
-# Function to play text as speech asynchronously
-last_spoken = None  # Track last spoken number to avoid repetition
-last_speech_time = 0  # Track last speech time for cooldown
-speech_cooldown = 1.5  # Wait time before speaking again
-
-
-
-
-# Start camera and real-time gesture recognition
-if run:
-    st.write("Starting Hand Gesture Recognition...")
-
-    cap = cv2.VideoCapture(0)
-
-    while cap.isOpened():
-        data_aux = []
-        ret, frame = cap.read()
-        if not ret:
-            st.warning("Failed to grab frame.")
-            break
-
-        frame = cv2.flip(frame, 1)
-        H, W, _ = frame.shape
-
-        # Convert frame to RGB
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-        # Process frame for hand landmarks
-        results = hands.process(frame_rgb)
+class SignNumberProcessor(VideoProcessorBase):
+    """
+    VideoProcessor for Sign Number Recognition using WebRTC
+    Processes frames from browser camera in real-time
+    """
+    
+    def __init__(self):
+        self.hands = mp_hands.Hands(
+            static_image_mode=False,
+            min_detection_confidence=0.3,
+            min_tracking_confidence=0.5
+        )
+        self.predicted_number = ""
+        self.last_spoken = None
+        self.last_speech_time = 0
+        self.speech_cooldown = 1.5
+    
+    def recv(self, frame: av.VideoFrame) -> av.VideoFrame:
+        """
+        Process each video frame from browser camera
         
+        Args:
+            frame: Video frame from browser
+            
+        Returns:
+            Processed frame with hand landmarks and predictions
+        """
+        # Convert to numpy array
+        img = frame.to_ndarray(format="bgr24")
+        
+        # Flip for mirror effect
+        img = cv2.flip(img, 1)
+        
+        H, W, _ = img.shape
+        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        
+        # Process with MediaPipe
+        results = self.hands.process(img_rgb)
+        
+        data_aux = []
         predicted_character = 'Unknown'
-
+        
         if results.multi_hand_landmarks:
             for hand_landmarks in results.multi_hand_landmarks:
                 # Draw landmarks
                 mp_drawing.draw_landmarks(
-                    frame, hand_landmarks,
+                    img, hand_landmarks,
                     mp_hands.HAND_CONNECTIONS,
                     mp_drawing_styles.get_default_hand_landmarks_style(),
                     mp_drawing_styles.get_default_hand_connections_style()
                 )
-
+                
                 # Extract and normalize landmarks
                 x_ = [landmark.x for landmark in hand_landmarks.landmark]
                 y_ = [landmark.y for landmark in hand_landmarks.landmark]
-
+                
                 for i in range(len(hand_landmarks.landmark)):
                     data_aux.append(x_[i] - min(x_))
                     data_aux.append(y_[i] - min(y_))
-
+            
+            # Predict if we have correct feature count
             if len(data_aux) == 42:
                 prediction = model.predict([np.asarray(data_aux)])
                 predicted_character = labels_dict.get(prediction[0], 'Unknown')
-
-                # Draw bounding box and label
-                x1 = int(min(x_) * W) - 10
-                y1 = int(min(y_) * H) - 10
-                x2 = int(max(x_) * W) - 10
-                y2 = int(max(y_) * H) - 10
-
-                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 0), 4)
-                cv2.putText(frame, predicted_character, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX,
-                            1.3, (0, 0, 0), 3, cv2.LINE_AA)
                 
-                current_time = time.time()
-                if predicted_character != last_spoken and predicted_character != 'Unknown' and (current_time - last_speech_time > speech_cooldown):
-                    speak(predicted_character)
-                    last_spoken = predicted_character
-                    last_speech_time = current_time
+                if predicted_character != 'Unknown':
+                    self.predicted_number = predicted_character
+                    
+                    # Draw bounding box and label
+                    x1 = int(min(x_) * W) - 10
+                    y1 = int(min(y_) * H) - 10
+                    x2 = int(max(x_) * W) - 10
+                    y2 = int(max(y_) * H) - 10
+                    
+                    cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 4)
+                    cv2.putText(img, predicted_character, (x1, y1 - 10), 
+                              cv2.FONT_HERSHEY_SIMPLEX, 1.3, (0, 255, 0), 3, cv2.LINE_AA)
+                    
+                    # Track for speech (will be called from main thread)
+                    current_time = time.time()
+                    if (predicted_character != self.last_spoken and 
+                        current_time - self.last_speech_time > self.speech_cooldown):
+                        self.last_spoken = predicted_character
+                        self.last_speech_time = current_time
+        
+        # Convert back to av.VideoFrame
+        return av.VideoFrame.from_ndarray(img, format="bgr24")
 
-        # Display the frame in Streamlit
-        frame_placeholder.image(frame, channels="BGR")        
 
+# Create WebRTC context
+st.info("📹 Click 'START' to enable camera. Grant browser camera permission when prompted.")
 
-        # Stop camera when checkbox is unchecked
-        if not run:
-            break
+webrtc_ctx = webrtc_streamer(
+    key="sign-number-recognition",
+    video_processor_factory=SignNumberProcessor,
+    rtc_configuration=RTC_CONFIGURATION,
+    media_stream_constraints=MEDIA_STREAM_CONSTRAINTS,
+    async_processing=True,
+)
 
-    # Cleanup
-    cap.release()
-    cv2.destroyAllWindows()
-    st.write("Camera stopped.")
+# Display prediction outside video
+st.markdown("### Recognition Output")
+col1, col2 = st.columns([2, 1])
+
+with col1:
+    prediction_placeholder = st.empty()
+    
+    if webrtc_ctx.video_processor:
+        if webrtc_ctx.video_processor.predicted_number:
+            prediction_placeholder.markdown(
+                f'<div class="prediction-box"><div class="prediction-text">{webrtc_ctx.video_processor.predicted_number}</div></div>',
+                unsafe_allow_html=True
+            )
+            
+            # Browser TTS (executed in main thread)
+            if (webrtc_ctx.video_processor.predicted_number != 
+                st.session_state.get('last_spoken_number')):
+                speak_text(webrtc_ctx.video_processor.predicted_number)
+                st.session_state.last_spoken_number = webrtc_ctx.video_processor.predicted_number
+        else:
+            prediction_placeholder.markdown(
+                '<div class="prediction-box"><div class="prediction-text">Waiting for hand...</div></div>',
+                unsafe_allow_html=True
+            )
+
+with col2:
+    st.markdown("**Status:**")
+    if webrtc_ctx.state.playing:
+        st.success("🟢 Camera Active")
+    else:
+        st.warning("⚪ Camera Inactive")
 
 st.markdown("""
     <h2>How It Works</h2>
     <p>
-        The system uses your camera to detect hand gestures corresponding to numbers. Once a gesture is recognized, it is converted into a spoken word using the gTTS (Google Text-to-Speech) API.
+        The system uses your browser's camera to detect hand gestures for numbers 0-9. MediaPipe tracks hand landmarks,
+        and our ML model recognizes ISL numbers in real-time. Audio uses browser's text-to-speech.
     </p>
     <h2>How to Use</h2>
     <ul>
-        <li>Enable the camera by clicking the 'Start Camera' button.</li>
-        <li>Position your hand in front of the camera, forming numbers with your fingers.</li>
-        <li>The system will automatically recognize the sign number and speak the corresponding number aloud.</li>
+        <li>Click 'START' and allow camera access</li>
+        <li>Position your hand in view</li>
+        <li>Form ISL number signs (0-9)</li>
+        <li>System recognizes and speaks the number</li>
+        <li>Fully cloud-compatible!</li>
     </ul>
     <h2>Troubleshooting</h2>
     <p>
-        If the system is not recognizing your hand correctly, make sure it is fully visible and well-lit.
+        <strong>Camera not working?</strong> Check browser permissions. <br>
+        <strong>Black screen?</strong> Use HTTPS or localhost. <br>
+        <strong>Slow?</strong> Ensure good lighting and clear hand visibility.
     </p>
 """, unsafe_allow_html=True)

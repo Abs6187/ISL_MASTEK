@@ -1,4 +1,9 @@
 import streamlit as st
+import warnings
+
+# Suppress warnings
+warnings.filterwarnings('ignore', category=UserWarning)
+warnings.filterwarnings('ignore', message='.*InconsistentVersionWarning.*')
 
 # Set dark theme with Material UI color schema
 st.set_page_config(

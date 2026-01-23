@@ -1,5 +1,8 @@
 streamlit
 streamlit-elements==0.1.*
+streamlit-webrtc
+aiortc
+av
 opencv-python-headless
 mediapipe
 numpy
