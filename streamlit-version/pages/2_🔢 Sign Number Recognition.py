@@ -9,6 +9,8 @@ import warnings
 from streamlit_webrtc import webrtc_streamer, VideoProcessorBase
 import av
 import time
+from mediapipe.tasks import python
+from mediapipe.tasks.python import vision
 
 # Suppress warnings
 warnings.filterwarnings('ignore', category=UserWarning)
@@ -77,15 +79,16 @@ model_path = os.path.join(os.path.dirname(__file__), '..', 'assets', 'models', '
 model_dict = pickle.load(open(model_path, 'rb'))
 model = model_dict['model']
 
-# MediaPipe Hands setup (handle both old and new API versions)
-try:
-    mp_hands = mp.solutions.hands
-    mp_drawing = mp.solutions.drawing_utils
-    mp_drawing_styles = mp.solutions.drawing_styles
-except AttributeError:
-    import mediapipe.python.solutions.hands as mp_hands
-    import mediapipe.python.solutions.drawing_utils as mp_drawing
-    import mediapipe.python.solutions.drawing_styles as mp_drawing_styles
+# Initialize MediaPipe Tasks Hand Landmarker
+model_path_task = os.path.join(os.path.dirname(__file__), '..', 'assets', 'models', 'hand_landmarker.task')
+base_options = python.BaseOptions(model_asset_path=model_path_task)
+hand_landmarker_options = vision.HandLandmarkerOptions(
+    base_options=base_options,
+    running_mode=vision.RunningMode.IMAGE,
+    num_hands=2,
+    min_hand_detection_confidence=0.3,
+    min_hand_presence_confidence=0.3
+)
 
 # Labels dictionary for gestures
 labels_dict = {0: '1', 1: '2', 2: '3', 3: '4', 4: '5', 5: '6', 6: '7', 7: '8', 8: '9', 9: '0'}
@@ -98,11 +101,7 @@ class SignNumberProcessor(VideoProcessorBase):
     """
     
     def __init__(self):
-        self.hands = mp_hands.Hands(
-            static_image_mode=False,
-            min_detection_confidence=0.3,
-            min_tracking_confidence=0.5
-        )
+        self.landmarker = vision.HandLandmarker.create_from_options(hand_landmarker_options)
         self.predicted_number = ""
         self.last_spoken = None
         self.last_speech_time = 0
@@ -127,27 +126,26 @@ class SignNumberProcessor(VideoProcessorBase):
         H, W, _ = img.shape
         img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         
-        # Process with MediaPipe
-        results = self.hands.process(img_rgb)
+        # Process with MediaPipe Tasks API
+        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=img_rgb)
+        results = self.landmarker.detect(mp_image)
         
         data_aux = []
         predicted_character = 'Unknown'
         
-        if results.multi_hand_landmarks:
-            for hand_landmarks in results.multi_hand_landmarks:
-                # Draw landmarks
-                mp_drawing.draw_landmarks(
-                    img, hand_landmarks,
-                    mp_hands.HAND_CONNECTIONS,
-                    mp_drawing_styles.get_default_hand_landmarks_style(),
-                    mp_drawing_styles.get_default_hand_connections_style()
-                )
+        if results.hand_landmarks:
+            for hand_landmarks in results.hand_landmarks:
+                # Draw landmarks manually with cv2
+                for landmark in hand_landmarks:
+                    x_px = int(landmark.x * W)
+                    y_px = int(landmark.y * H)
+                    cv2.circle(img, (x_px, y_px), 3, (0, 255, 0), -1)
                 
                 # Extract and normalize landmarks
-                x_ = [landmark.x for landmark in hand_landmarks.landmark]
-                y_ = [landmark.y for landmark in hand_landmarks.landmark]
+                x_ = [landmark.x for landmark in hand_landmarks]
+                y_ = [landmark.y for landmark in hand_landmarks]
                 
-                for i in range(len(hand_landmarks.landmark)):
+                for i in range(len(hand_landmarks)):
                     data_aux.append(x_[i] - min(x_))
                     data_aux.append(y_[i] - min(y_))
             

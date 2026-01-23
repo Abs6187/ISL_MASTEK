@@ -7,7 +7,7 @@ streamlit-webrtc  # Browser-based camera access for cloud deployment
 aiortc  # WebRTC implementation
 av  # PyAV for video frame processing
 opencv-python-headless
-mediapipe
+mediapipe>=0.10.0
 numpy
 gTTS
 # pygame  # Optional for local audio playback

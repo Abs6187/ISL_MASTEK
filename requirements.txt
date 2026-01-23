@@ -4,7 +4,7 @@ streamlit-webrtc
 aiortc
 av
 opencv-python-headless
-mediapipe
+mediapipe>=0.10.0
 numpy
 gTTS
 pygame
