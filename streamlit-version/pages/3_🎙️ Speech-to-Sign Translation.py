@@ -1,7 +1,13 @@
 import streamlit as st
-import speech_recognition as sr
 import re  # Regular expression for filtering alphabets
 import os
+
+# Try to import speech_recognition (not available in cloud)
+try:
+    import speech_recognition as sr
+    SPEECH_RECOGNITION_AVAILABLE = True
+except ImportError:
+    SPEECH_RECOGNITION_AVAILABLE = False
 
 st.set_page_config(page_title="Speech to Sign Language ", page_icon="🎙️", layout="wide")
 
@@ -40,6 +46,178 @@ st.markdown("""
         This feature converts a single alphabet or digit spoken by the user into its corresponding Indian Sign Language (ISL) gesture representation.
     </h6>
     """, unsafe_allow_html=True)
+
+
+# Check if speech recognition is available
+if not SPEECH_RECOGNITION_AVAILABLE:
+    st.info("🌐 **Using Browser-Based Speech Recognition** (Cloud Compatible)")
+    st.markdown("""
+        <style>
+            .speech-container {
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 20px;
+            }
+            #speech-text {
+                width: 100%;
+                min-height: 100px;
+                padding: 15px;
+                font-size: 16px;
+                background: #1E1E1E;
+                color: #E0E0E0;
+                border: 2px solid #00BCD4;
+                border-radius: 8px;
+                margin: 20px 0;
+            }
+            .speech-btn {
+                background: linear-gradient(135deg, #5E35B1 0%, #3F51B5 100%);
+                color: #FAFAFA;
+                border: none;
+                border-radius: 8px;
+                padding: 12px 30px;
+                font-size: 16px;
+                cursor: pointer;
+                margin: 10px 5px;
+                transition: all 0.3s ease;
+            }
+            .speech-btn:hover {
+                background: linear-gradient(135deg, #4527A0 0%, #303F9F 100%);
+                transform: translateY(-1px);
+            }
+            .speech-btn:disabled {
+                background: #666;
+                cursor: not-allowed;
+            }
+            #status {
+                padding: 10px;
+                margin: 10px 0;
+                border-radius: 5px;
+                text-align: center;
+            }
+            .status-listening {
+                background: #4CAF50;
+                color: white;
+            }
+            .status-error {
+                background: #f44336;
+                color: white;
+            }
+            .status-info {
+                background: #2196F3;
+                color: white;
+            }
+            #result-image {
+                max-width: 300px;
+                margin: 20px auto;
+                display: block;
+            }
+        </style>
+        
+        <div class="speech-container">
+            <h2 style="color: #00BCD4; text-align: center;">🎤 Browser Speech Recognition (Cloud Compatible)</h2>
+            <p style="text-align: center; color: #E0E0E0;">Click "Start Listening" and say "Letter" followed by an alphabet (A-Z)</p>
+            
+            <div id="status" class="status-info">Ready to listen...</div>
+            
+            <div style="text-align: center;">
+                <button class="speech-btn" id="start-btn" onclick="startListening()">🎤 Start Listening</button>
+                <button class="speech-btn" id="stop-btn" onclick="stopListening()" disabled>⏹️ Stop</button>
+            </div>
+            
+            <textarea id="speech-text" placeholder="Speech will appear here..." readonly></textarea>
+            
+            <div id="result-container" style="text-align: center;">
+                <img id="result-image" style="display:none;" />
+            </div>
+        </div>
+        
+        <script>
+            let recognition;
+            let isListening = false;
+            
+            // Check if browser supports speech recognition
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.lang = 'en-US';
+                
+                recognition.onstart = function() {
+                    isListening = true;
+                    document.getElementById('status').className = 'status-listening';
+                    document.getElementById('status').textContent = '🎤 Listening... Say "Letter A" or similar';
+                    document.getElementById('start-btn').disabled = true;
+                    document.getElementById('stop-btn').disabled = false;
+                };
+                
+                recognition.onresult = function(event) {
+                    const transcript = event.results[0][0].transcript;
+                    document.getElementById('speech-text').value = 'You said: ' + transcript;
+                    
+                    // Extract letter
+                    const match = transcript.toLowerCase().match(/letter\\s*([a-z])/);
+                    if (match) {
+                        const letter = match[1].toUpperCase();
+                        document.getElementById('status').className = 'status-info';
+                        document.getElementById('status').textContent = '✅ Detected:  ' + letter;
+                        
+                        // Try to load the image
+                        const img = document.getElementById('result-image');
+                        img.style.display = 'block';
+                        img.alt = 'Sign for ' + letter;
+                        
+                        // You would replace this with actual image paths
+                        img.onerror = function() {
+                            document.getElementById('status').className = 'status-error';
+                            document.getElementById('status').textContent = '⚠️ Image for "' + letter + '" not found';
+                        };
+                    } else {
+                        document.getElementById('status').className = 'status-error';
+                        document.getElementById('status').textContent = '❌ No letter detected. Please say "Letter" followed by A-Z';
+                    }
+                };
+                
+                recognition.onerror = function(event) {
+                    document.getElementById('status').className = 'status-error';
+                    document.getElementById('status').textContent = '❌ Error: ' + event.error;
+                    resetButtons();
+                };
+                
+                recognition.onend = function() {
+                    resetButtons();
+                };
+            } else {
+                document.getElementById('status').className = 'status-error';
+                document.getElementById('status').textContent = '❌ Speech recognition not supported in this browser. Try Chrome or Edge.';
+                document.getElementById('start-btn').disabled = true;
+            }
+            
+            function startListening() {
+                if (recognition && !isListening) {
+                    recognition.start();
+                }
+            }
+            
+            function stopListening() {
+                if (recognition && isListening) {
+                    recognition.stop();
+                }
+            }
+            
+            function resetButtons() {
+                isListening = false;
+                document.getElementById('start-btn').disabled = false;
+                document.getElementById('stop-btn').disabled = true;
+                if (document.getElementById('status').className === 'status-listening') {
+                    document.getElementById('status').className = 'status-info';
+                    document.getElementById('status').textContent = 'Ready to listen...';
+                }
+            }
+        </script>
+    """, unsafe_allow_html=True)
+    st.stop()
 
 # Initialize the recognizer
 recognizer = sr.Recognizer()
