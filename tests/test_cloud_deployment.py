@@ -120,8 +120,8 @@ class TestStreamlitPages:
             if os.path.exists(page_path):
                 with open(page_path, 'r', encoding='utf-8') as f:
                     content = f.read()
-                    assert 'AUDIO_AVAILABLE' in content, f"{page} missing audio fallback"
-                    assert 'try:' in content, f"{page} missing try-except for pygame"
+                    # Verify usages of browser_tts instead of local audio
+                    assert 'speak_text' in content, f"{page} should use browser_tts speak_text"
 
 class TestRequirements:
     """Test requirements and dependencies"""

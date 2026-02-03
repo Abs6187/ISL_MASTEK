@@ -1,5 +1,6 @@
 import sys
 import os
+import importlib
 from unittest.mock import MagicMock, patch
 
 # Add streamlit-version directory to path
@@ -19,6 +20,10 @@ import pytest # Import pytest after mocking if needed, or keeping it top level i
 
 class TestWebRTCConfig:
     
+    def setup_method(self):
+        """Reload utils to ensure proper mocking before each test"""
+        importlib.reload(webrtc_utils)
+
     def teardown_method(self):
         """Reset secrets after each test"""
         mock_st.secrets = {}
@@ -63,7 +68,7 @@ class TestWebRTCConfig:
             }
         }
         mock_st.secrets = mock_secrets
-        
+                
         # Get the mock client we set up in sys.modules
         MockClient = sys.modules["twilio.rest"].Client
         mock_instance = MockClient.return_value

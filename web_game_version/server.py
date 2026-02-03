@@ -54,8 +54,7 @@ options = HandLandmarkerOptions(
 )
 landmarker = HandLandmarker.create_from_options(options)
 
-mp_drawing = mp.solutions.drawing_utils
-mp_drawing_styles = mp.solutions.drawing_styles
+
 
 
 @app.route("/predict", methods=["POST"])

@@ -17,9 +17,9 @@ class TestIntegration:
             import numpy as np
             import pickle
             
-            # Verify MediaPipe hands is available
-            mp_hands = mp.solutions.hands
-            assert mp_hands is not None
+            # Verify MediaPipe Tasks is available
+            from mediapipe.tasks.python import vision
+            assert vision.HandLandmarker is not None
             
         except Exception as e:
             pytest.fail(f"Import chain failed: {e}")
