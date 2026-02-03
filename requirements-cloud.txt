@@ -3,8 +3,9 @@
 
 streamlit
 streamlit-elements==0.1.*
-streamlit-webrtc  # Browser-based camera access for cloud deployment
-aiortc  # WebRTC implementation
+streamlit-webrtc>=0.47.0  # Browser-based camera access for cloud deployment
+aiortc>=1.3.0,<2.0.0  # WebRTC implementation - pinned for stability
+aioice>=0.9.0  # ICE/STUN implementation
 av  # PyAV for video frame processing
 opencv-python-headless
 mediapipe>=0.10.0
@@ -20,3 +21,6 @@ scikit-learn
 # Note: PyAudio and SpeechRecognition features won't work in cloud deployments
 # as they require microphone access. These are primarily for local development.
 # Browser camera access via WebRTC (streamlit-webrtc) works perfectly in cloud!
+# 
+# Known Issue: aioice may log AttributeError warnings during connection cleanup.
+# These are non-fatal and handled by our event_loop_manager utility.

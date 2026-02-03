@@ -20,6 +20,8 @@ warnings.filterwarnings('ignore', message='.*InconsistentVersionWarning.*')
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from utils.webrtc_utils import RTC_CONFIGURATION, MEDIA_STREAM_CONSTRAINTS
 from utils.browser_tts import speak_text
+# Import event loop manager to suppress aioice warnings and configure event loop
+from utils import event_loop_manager
 
 st.set_page_config(page_title="Real-Time Sign Alphabet Detection", page_icon="🖐️", layout="wide")
 
@@ -111,6 +113,15 @@ class SignAlphabetProcessor(VideoProcessorBase):
         self.last_spoken = None
         self.last_speech_time = 0
         self.speech_cooldown = 1.5
+    
+    def __del__(self):
+        """Cleanup MediaPipe resources when processor is destroyed"""
+        try:
+            if hasattr(self, 'landmarker') and self.landmarker:
+                self.landmarker.close()
+        except Exception:
+            # Ignore cleanup errors - they're non-critical
+            pass
     
     def recv(self, frame: av.VideoFrame) -> av.VideoFrame:
         """

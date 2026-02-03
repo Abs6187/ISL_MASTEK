@@ -1,6 +1,41 @@
 # Cloud Deployment Notes
 
-## PyAudio and Microphone Access
+## 🌐 WebRTC Network Configuration
+
+### 1. Default Configuration (Google STUN)
+By default, the application is configured to use **Google's public STUN servers** (`stun.l.google.com:19302`). 
+**No additional configuration or secrets are required** for this to work in most open network environments.
+
+### 2. Troubleshooting Connection Issues
+If you encounter the error **"Check your network connection"** or the video spinner runs forever, it likely means the default STUN server is blocked by a firewall or symmetric NAT (common in corporate/university networks).
+
+In this case, you must provide a **TURN server**.
+
+#### Option: Add TURN Server via Secrets (Optional)
+You can configure a custom STUN/TURN server without changing the code by adding it to your Streamlit Secrets.
+
+**Using Twilio (Recommended for reliability):**
+1.  Get Account SID and Auth Token from Twilio Console.
+2.  Add to `.streamlit/secrets.toml` (local) or Streamlit Cloud Secrets:
+
+```toml
+[webrtc.twilio]
+account_sid = "your_account_sid_here"
+auth_token = "your_auth_token_here"
+```
+
+**Using Custom/Free TURN (e.g. Metered.ca):**
+```toml
+[webrtc]
+iceServers = [
+    { urls = ["stun:stun.l.google.com:19302"] },
+    { urls = ["turn:your.turn.server:80"], username = "user", credential = "password" }
+]
+```
+
+---
+
+## 🎤 PyAudio and Microphone Access
 
 ### Issue:
 PyAudio fails to build in cloud environments because it requires:
