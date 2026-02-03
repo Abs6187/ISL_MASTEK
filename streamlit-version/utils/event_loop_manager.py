@@ -134,6 +134,34 @@ configure_event_loop_policy()
 
 
 
+
+def patch_aioice():
+    """
+    Monkey-patch aioice to prevent AttributeError: 'NoneType' object has no attribute 'sendto'
+    during event loop teardown.
+    """
+    try:
+        import aioice.ice
+    except ImportError:
+        return
+
+    # Store original method if not already patched
+    if not hasattr(aioice.ice.Connection, '_original_send_stun'):
+        aioice.ice.Connection._original_send_stun = aioice.ice.Connection.send_stun
+
+    def safe_send_stun(self, message, addr):
+        # Check if transport exists before using it
+        if self.transport is None:
+            # Transport is closed, silently ignore
+            return
+        return self._original_send_stun(message, addr)
+
+    # Apply patch
+    aioice.ice.Connection.send_stun = safe_send_stun
+
+
 # Initialize on module import
 suppress_aioice_warnings()
+patch_aioice()  # Apply safety patch
 configure_event_loop_policy()
+
