@@ -146,8 +146,9 @@ def patch_aioice():
         return
 
     # Store original method if not already patched
-    if not hasattr(aioice.ice.Connection, '_original_send_stun'):
-        aioice.ice.Connection._original_send_stun = aioice.ice.Connection.send_stun
+    # Target StunProtocol, not Connection
+    if not hasattr(aioice.ice.StunProtocol, '_original_send_stun'):
+        aioice.ice.StunProtocol._original_send_stun = aioice.ice.StunProtocol.send_stun
 
     def safe_send_stun(self, message, addr):
         # Check if transport exists before using it
@@ -156,8 +157,8 @@ def patch_aioice():
             return
         return self._original_send_stun(message, addr)
 
-    # Apply patch
-    aioice.ice.Connection.send_stun = safe_send_stun
+    # Apply patch to StunProtocol
+    aioice.ice.StunProtocol.send_stun = safe_send_stun
 
 
 # Initialize on module import
