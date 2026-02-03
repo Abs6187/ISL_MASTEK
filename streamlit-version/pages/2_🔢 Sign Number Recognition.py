@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from utils.webrtc_utils import RTC_CONFIGURATION, MEDIA_STREAM_CONSTRAINTS
 from utils.browser_tts import speak_text
 # Import event loop manager to suppress aioice warnings and configure event loop
-from utils import event_loop_manager
+import utils.event_loop_manager
 
 st.set_page_config(page_title="Real-Time Sign Number Detection", page_icon="🖐️", layout="wide")
 
