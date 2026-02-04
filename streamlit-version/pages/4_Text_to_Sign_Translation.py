@@ -1,5 +1,9 @@
 import streamlit as st
 import os
+import sys
+
+# Add parent directory to path for utils
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 st.set_page_config(page_title="Text to Sign Language", page_icon="📝", layout="wide")
 
@@ -82,6 +86,15 @@ if st.button('Generate Image'):
             st.write('Image not found. Please try again.')
         else:
             st.image(image, caption='Generated Image', width=300)
+            
+            # Use gTTS to speak the letter
+            try:
+                from utils.browser_tts import speak_text_gtts_visible, is_gtts_available
+                if is_gtts_available():
+                    st.markdown("#### 🔊 Audio Pronunciation")
+                    speak_text_gtts_visible(f"The letter {text.upper()}", autoplay=True)
+            except Exception:
+                pass  # TTS is optional
 
 
 st.markdown("""

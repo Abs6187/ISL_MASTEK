@@ -1,4 +1,9 @@
 import streamlit as st
+import sys
+import os
+
+# Add parent directory to path for utils
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 # Set dark theme
 st.set_page_config(page_title="Settings", page_icon="⚙️", layout="centered")
@@ -29,7 +34,40 @@ st.markdown("""
 
 st.title("Settings")
 
-st.info("🌐 **Browser-Based Text-to-Speech Settings**")
+# gTTS Section - More reliable
+st.markdown("## 🔊 Google Text-to-Speech (gTTS)")
+st.info("✅ **Recommended** - Works reliably in all browsers and cloud deployments")
+
+try:
+    from utils.browser_tts import speak_text_gtts_visible, is_gtts_available
+    
+    if is_gtts_available():
+        gtts_text = st.text_input("Text to speak with gTTS:", value="Hello! This is a test of Google Text-to-Speech.", key="gtts_text")
+        
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            gtts_lang = st.selectbox("Language", ["en", "hi", "es", "fr", "de", "it", "pt", "ja", "ko", "zh-CN"], key="gtts_lang")
+        with col2:
+            gtts_slow = st.checkbox("Slow mode", value=False, key="gtts_slow")
+        with col3:
+            gtts_autoplay = st.checkbox("Autoplay", value=True, key="gtts_autoplay")
+        
+        if st.button("🔊 Speak with gTTS", key="speak_gtts"):
+            if gtts_text:
+                speak_text_gtts_visible(gtts_text, lang=gtts_lang, slow=gtts_slow, autoplay=gtts_autoplay)
+            else:
+                st.warning("Please enter some text to speak")
+    else:
+        st.warning("gTTS is not installed. Install with: pip install gTTS")
+        
+except ImportError as e:
+    st.warning(f"Could not load gTTS module: {e}")
+
+st.markdown("---")
+
+# Browser TTS Section - Fallback
+st.markdown("## 🌐 Browser Text-to-Speech (Fallback)")
+st.info("⚠️ **Fallback option** - Uses browser's built-in TTS, may not work in all environments")
 st.markdown("""
     <style>
         .tts-container {

@@ -1,6 +1,7 @@
 import streamlit as st
 import re  # Regular expression for filtering alphabets
 import os
+import streamlit.components.v1 as components
 
 # Try to import speech_recognition (not available in cloud)
 try:
@@ -8,6 +9,10 @@ try:
     SPEECH_RECOGNITION_AVAILABLE = True
 except ImportError:
     SPEECH_RECOGNITION_AVAILABLE = False
+
+# Initialize session state for detected letter
+if 'detected_letter' not in st.session_state:
+    st.session_state.detected_letter = None
 
 st.set_page_config(page_title="Speech to Sign Language ", page_icon="🎙️", layout="wide")
 
@@ -48,6 +53,34 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 
+def load_image(file_name):
+    """
+    Searches for an image file in the 'assets/images' directory.
+    Uses case-insensitive matching to handle mixed case filenames.
+    
+    Args:
+        file_name (str): Name of the file to find (e.g., "a.jpg")
+        
+    Returns:
+        str: Absolute path to the image if found, else None.
+    """
+    folder_path = os.path.join(os.path.dirname(__file__), '..', 'assets', 'images')
+    
+    # Get the base name without extension
+    base_name = file_name.rsplit('.', 1)[0] if '.' in file_name else file_name
+    
+    # Try to find the file with case-insensitive matching
+    if os.path.exists(folder_path):
+        for actual_file in os.listdir(folder_path):
+            actual_base = actual_file.rsplit('.', 1)[0] if '.' in actual_file else actual_file
+            actual_ext = actual_file.rsplit('.', 1)[1].lower() if '.' in actual_file else ''
+            
+            # Match base name (case-insensitive) and check for image extensions
+            if actual_base.lower() == base_name.lower() and actual_ext in ['jpg', 'jpeg', 'png', 'gif']:
+                return os.path.join(folder_path, actual_file)
+    
+    return None
+
 # Check if speech recognition is available
 if not SPEECH_RECOGNITION_AVAILABLE:
     st.info("🌐 **Using Browser-Based Speech Recognition** (Cloud Compatible)")
@@ -57,17 +90,6 @@ if not SPEECH_RECOGNITION_AVAILABLE:
                 max-width: 800px;
                 margin: 0 auto;
                 padding: 20px;
-            }
-            #speech-text {
-                width: 100%;
-                min-height: 100px;
-                padding: 15px;
-                font-size: 16px;
-                background: #1E1E1E;
-                color: #E0E0E0;
-                border: 2px solid #00BCD4;
-                border-radius: 8px;
-                margin: 20px 0;
             }
             .speech-btn {
                 background: linear-gradient(135deg, #5E35B1 0%, #3F51B5 100%);
@@ -106,117 +128,215 @@ if not SPEECH_RECOGNITION_AVAILABLE:
                 background: #2196F3;
                 color: white;
             }
-            #result-image {
-                max-width: 300px;
-                margin: 20px auto;
-                display: block;
-            }
         </style>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("### 🎤 Browser Speech Recognition")
+    st.write("Enter a letter manually or use browser speech recognition below.")
+    
+    # Manual input fallback - always works
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        manual_letter = st.text_input("Enter a letter (A-Z):", max_chars=1, key="manual_letter").upper()
+    with col2:
+        st.write("")  # Spacing
+        st.write("")  # Spacing
+        show_manual = st.button("Show Sign", key="show_manual")
+    
+    if show_manual and manual_letter:
+        if manual_letter.isalpha():
+            st.session_state.detected_letter = manual_letter
+        else:
+            st.warning("Please enter a valid letter (A-Z)")
+    
+    # Browser speech recognition using Streamlit component
+    st.markdown("---")
+    st.markdown("### 🎙️ Or Use Voice Recognition")
+    st.write("Click the button and say 'Letter A' (or any letter A-Z)")
+    
+    # JavaScript-based speech recognition that updates a hidden input
+    speech_html = """
+    <style>
+        .speech-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .speech-btn {
+            background: linear-gradient(135deg, #5E35B1 0%, #3F51B5 100%);
+            color: #FAFAFA;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 30px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px 5px;
+            transition: all 0.3s ease;
+        }
+        .speech-btn:hover {
+            background: linear-gradient(135deg, #4527A0 0%, #303F9F 100%);
+            transform: translateY(-1px);
+        }
+        .speech-btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        #status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .status-listening {
+            background: #4CAF50;
+            color: white;
+        }
+        .status-error {
+            background: #f44336;
+            color: white;
+        }
+        .status-info {
+            background: #2196F3;
+            color: white;
+        }
+    </style>
+    <div class="speech-container">
+        <div id="status" class="status-info">Ready to listen...</div>
         
-        <div class="speech-container">
-            <h2 style="color: #00BCD4; text-align: center;">🎤 Browser Speech Recognition (Cloud Compatible)</h2>
-            <p style="text-align: center; color: #E0E0E0;">Click "Start Listening" and say "Letter" followed by an alphabet (A-Z)</p>
-            
-            <div id="status" class="status-info">Ready to listen...</div>
-            
-            <div style="text-align: center;">
-                <button class="speech-btn" id="start-btn" onclick="startListening()">🎤 Start Listening</button>
-                <button class="speech-btn" id="stop-btn" onclick="stopListening()" disabled>⏹️ Stop</button>
-            </div>
-            
-            <textarea id="speech-text" placeholder="Speech will appear here..." readonly></textarea>
-            
-            <div id="result-container" style="text-align: center;">
-                <img id="result-image" style="display:none;" />
-            </div>
+        <div style="text-align: center; margin: 15px 0;">
+            <button class="speech-btn" id="start-btn" onclick="startListening()">🎤 Start Listening</button>
+            <button class="speech-btn" id="stop-btn" onclick="stopListening()" disabled>⏹️ Stop</button>
         </div>
         
-        <script>
-            let recognition;
-            let isListening = false;
+        <div id="result-text" style="text-align: center; font-size: 18px; color: #E0E0E0; margin: 15px 0;"></div>
+        <div id="detected-letter" style="text-align: center; font-size: 48px; font-weight: bold; color: #00BCD4; margin: 15px 0;"></div>
+    </div>
+    
+    <script>
+        let recognition;
+        let isListening = false;
+        
+        // Check if browser supports speech recognition
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
             
-            // Check if browser supports speech recognition
-            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                recognition = new SpeechRecognition();
-                
-                recognition.continuous = false;
-                recognition.interimResults = false;
-                recognition.lang = 'en-US';
-                
-                recognition.onstart = function() {
-                    isListening = true;
-                    document.getElementById('status').className = 'status-listening';
-                    document.getElementById('status').textContent = '🎤 Listening... Say "Letter A" or similar';
-                    document.getElementById('start-btn').disabled = true;
-                    document.getElementById('stop-btn').disabled = false;
-                };
-                
-                recognition.onresult = function(event) {
-                    const transcript = event.results[0][0].transcript;
-                    document.getElementById('speech-text').value = 'You said: ' + transcript;
-                    
-                    // Extract letter
-                    const match = transcript.toLowerCase().match(/letter\s*([a-z])/);
-                    if (match) {
-                        const letter = match[1].toUpperCase();
-                        document.getElementById('status').className = 'status-info';
-                        document.getElementById('status').textContent = '✅ Detected:  ' + letter;
-                        
-                        // Try to load the image
-                        const img = document.getElementById('result-image');
-                        img.style.display = 'block';
-                        img.alt = 'Sign for ' + letter;
-                        
-                        // You would replace this with actual image paths
-                        img.onerror = function() {
-                            document.getElementById('status').className = 'status-error';
-                            document.getElementById('status').textContent = '⚠️ Image for "' + letter + '" not found';
-                        };
-                    } else {
-                        document.getElementById('status').className = 'status-error';
-                        document.getElementById('status').textContent = '❌ No letter detected. Please say "Letter" followed by A-Z';
-                    }
-                };
-                
-                recognition.onerror = function(event) {
-                    document.getElementById('status').className = 'status-error';
-                    document.getElementById('status').textContent = '❌ Error: ' + event.error;
-                    resetButtons();
-                };
-                
-                recognition.onend = function() {
-                    resetButtons();
-                };
-            } else {
-                document.getElementById('status').className = 'status-error';
-                document.getElementById('status').textContent = '❌ Speech recognition not supported in this browser. Try Chrome or Edge.';
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+            
+            recognition.onstart = function() {
+                isListening = true;
+                document.getElementById('status').className = 'status-listening';
+                document.getElementById('status').textContent = '🎤 Listening... Say "Letter A" or similar';
                 document.getElementById('start-btn').disabled = true;
-            }
+                document.getElementById('stop-btn').disabled = false;
+            };
             
-            function startListening() {
-                if (recognition && !isListening) {
-                    recognition.start();
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                document.getElementById('result-text').textContent = 'You said: "' + transcript + '"';
+                
+                // Extract letter - match "letter X" or just single letters
+                let letter = null;
+                const letterMatch = transcript.toLowerCase().match(/letter\s*([a-z])/i);
+                if (letterMatch) {
+                    letter = letterMatch[1].toUpperCase();
+                } else {
+                    // Try to find any single letter
+                    const singleMatch = transcript.trim().match(/^([a-z])$/i);
+                    if (singleMatch) {
+                        letter = singleMatch[1].toUpperCase();
+                    }
                 }
-            }
-            
-            function stopListening() {
-                if (recognition && isListening) {
-                    recognition.stop();
-                }
-            }
-            
-            function resetButtons() {
-                isListening = false;
-                document.getElementById('start-btn').disabled = false;
-                document.getElementById('stop-btn').disabled = true;
-                if (document.getElementById('status').className === 'status-listening') {
+                
+                if (letter) {
                     document.getElementById('status').className = 'status-info';
-                    document.getElementById('status').textContent = 'Ready to listen...';
+                    document.getElementById('status').textContent = '✅ Detected letter: ' + letter + ' - Click "Use This Letter" below!';
+                    document.getElementById('detected-letter').textContent = letter;
+                    
+                    // Store in localStorage for Streamlit to read
+                    localStorage.setItem('detected_letter', letter);
+                } else {
+                    document.getElementById('status').className = 'status-error';
+                    document.getElementById('status').textContent = '❌ No letter detected. Please say "Letter" followed by A-Z';
                 }
+            };
+            
+            recognition.onerror = function(event) {
+                document.getElementById('status').className = 'status-error';
+                document.getElementById('status').textContent = '❌ Error: ' + event.error;
+                resetButtons();
+            };
+            
+            recognition.onend = function() {
+                resetButtons();
+            };
+        } else {
+            document.getElementById('status').className = 'status-error';
+            document.getElementById('status').textContent = '❌ Speech recognition not supported. Use manual input above or try Chrome/Edge.';
+            document.getElementById('start-btn').disabled = true;
+        }
+        
+        function startListening() {
+            if (recognition && !isListening) {
+                recognition.start();
             }
-        </script>
-    """, unsafe_allow_html=True)
+        }
+        
+        function stopListening() {
+            if (recognition && isListening) {
+                recognition.stop();
+            }
+        }
+        
+        function resetButtons() {
+            isListening = false;
+            document.getElementById('start-btn').disabled = false;
+            document.getElementById('stop-btn').disabled = true;
+            if (document.getElementById('status').className === 'status-listening') {
+                document.getElementById('status').className = 'status-info';
+                document.getElementById('status').textContent = 'Ready to listen...';
+            }
+        }
+    </script>
+    """
+    
+    components.html(speech_html, height=250)
+    
+    # Streamlit button to use the detected letter
+    voice_letter = st.text_input("Detected letter (copy from above or type):", key="voice_letter", max_chars=1).upper()
+    if st.button("Use This Letter", key="use_voice") and voice_letter:
+        if voice_letter.isalpha():
+            st.session_state.detected_letter = voice_letter
+        else:
+            st.warning("Please enter a valid letter (A-Z)")
+    
+    # Display the sign image if a letter was detected
+    if st.session_state.detected_letter:
+        st.markdown("---")
+        st.markdown(f"### Sign for Letter: {st.session_state.detected_letter}")
+        
+        image_path = load_image(st.session_state.detected_letter + '.jpg')
+        if image_path:
+            st.image(image_path, caption=f'ISL Sign for "{st.session_state.detected_letter}"', width=300)
+            
+            # Use gTTS to speak the letter
+            try:
+                from utils.browser_tts import speak_text_gtts_visible, is_gtts_available
+                if is_gtts_available():
+                    st.markdown("#### 🔊 Audio Pronunciation")
+                    speak_text_gtts_visible(f"The letter {st.session_state.detected_letter}", autoplay=True)
+            except Exception as e:
+                pass  # TTS is optional
+        else:
+            st.error(f'Image for letter "{st.session_state.detected_letter}" not found.')
+        
+        # Clear button
+        if st.button("Clear", key="clear_letter"):
+            st.session_state.detected_letter = None
+            st.rerun()
+    
     st.stop()
 
 # Initialize the recognizer
@@ -263,7 +383,7 @@ def listen_for_alphabets():
             st.warning("No speech detected within the timeout period.")
             return ""
         
-def load_image(file_name):
+def load_image_native(file_name):
     """
     Searches for an image file in the 'assets/images' directory.
     Uses case-insensitive matching to handle mixed case filenames.
@@ -326,11 +446,19 @@ try:
             st.write('Generating image...')
 
             # Load the image
-            image = load_image(recognized_text + '.jpg')
+            image = load_image_native(recognized_text + '.jpg')
             if image is None:
                 st.write('Image not found. Please try again.')
             else:
                 st.image(image, caption='Generated Image', width=300)
+                
+                # Use gTTS to speak the letter
+                try:
+                    from utils.browser_tts import speak_text_gtts_visible, is_gtts_available
+                    if is_gtts_available():
+                        speak_text_gtts_visible(f"The letter {recognized_text.upper()}", autoplay=True)
+                except Exception:
+                    pass  # TTS is optional
         
 except Exception as e:
      error_placeholder.error("An error occurred. Please try again.")
