@@ -209,7 +209,6 @@ webrtc_ctx = webrtc_streamer(
     rtc_configuration=RTC_CONFIGURATION,
     media_stream_constraints=MEDIA_STREAM_CONSTRAINTS,
     async_processing=True,
-    desired_playback_state="started",  # Auto-start camera
 )
 
 # Display prediction outside video

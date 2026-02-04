@@ -116,10 +116,10 @@ st.markdown("""
 | Mobile Browsers | ⚠️ May have issues |
 """)
 
-st.markdown("""
-### Current Configuration
-- **ICE Servers": {} servers configured
-- **Video Resolution**: Ideal 640x480, Max 1280x720
-- **Frame Rate**: Ideal 15 FPS, Max 30 FPS
-- **Audio**: Disabled (not needed for sign recognition)
-"".format(len(RTC_CONFIGURATION["iceServers"])))
+st.markdown(
+    "### Current Configuration\n"
+    f"- **ICE Servers**: {len(RTC_CONFIGURATION['iceServers'])} servers configured\n"
+    "- **Video Resolution**: Ideal 640x480, Max 1280x720\n"
+    "- **Frame Rate**: Ideal 15 FPS, Max 30 FPS\n"
+    "- **Audio**: Disabled (not needed for sign recognition)"
+)
