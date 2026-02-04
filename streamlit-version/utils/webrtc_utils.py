@@ -26,24 +26,32 @@ def get_ice_servers():
     2. st.secrets["webrtc"]["twilio"] (Twilio Dynamic Token)
     3. Default Google STUN servers
     """
-    # 1. Check for direct iceServers in secrets
-    if "webrtc" in st.secrets:
-        if "iceServers" in st.secrets["webrtc"]:
-            return st.secrets["webrtc"]["iceServers"]
-        
-        # 2. Check for Twilio credentials
-        if "twilio" in st.secrets["webrtc"]:
-            try:
-                twilio_config = st.secrets["webrtc"]["twilio"]
-                account_sid = twilio_config.get("account_sid")
-                auth_token = twilio_config.get("auth_token")
-                
-                if account_sid and auth_token:
-                    client = Client(account_sid, auth_token)
-                    token = client.tokens.create()
-                    return token.ice_servers
-            except Exception as e:
-                logging.warning(f"Failed to fetch Twilio ICE servers: {e}")
+    # Try to access secrets - handle case when secrets.toml doesn't exist
+    try:
+        # 1. Check for direct iceServers in secrets
+        if "webrtc" in st.secrets:
+            if "iceServers" in st.secrets["webrtc"]:
+                return st.secrets["webrtc"]["iceServers"]
+            
+            # 2. Check for Twilio credentials
+            if "twilio" in st.secrets["webrtc"]:
+                try:
+                    twilio_config = st.secrets["webrtc"]["twilio"]
+                    account_sid = twilio_config.get("account_sid")
+                    auth_token = twilio_config.get("auth_token")
+                    
+                    if account_sid and auth_token:
+                        if Client is None:
+                            logging.warning("Twilio client not available - twilio package not installed")
+                        else:
+                            client = Client(account_sid, auth_token)
+                            token = client.tokens.create()
+                            return token.ice_servers
+                except Exception as e:
+                    logging.warning(f"Failed to fetch Twilio ICE servers: {e}")
+    except Exception as e:
+        # secrets.toml doesn't exist or can't be read - this is fine, use defaults
+        logging.debug(f"No secrets available, using default STUN servers: {e}")
     
     # 3. Fallback to default free Google STUN servers
     return [
