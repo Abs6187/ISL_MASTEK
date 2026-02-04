@@ -40,24 +40,68 @@ st.markdown("## 🔊 Google Text-to-Speech (gTTS)")
 st.info("✅ **Recommended** - Works reliably in all browsers and cloud deployments")
 
 try:
-    from utils.browser_tts import speak_text_gtts_visible, is_gtts_available
+    from utils.browser_tts import speak_text_gtts_visible, is_gtts_available, get_indian_languages
     
     if is_gtts_available():
         gtts_text = st.text_input("Text to speak with gTTS:", value="Hello! This is a test of Google Text-to-Speech.", key="gtts_text")
         
+        # Get Indian languages
+        indian_langs = get_indian_languages()
+        
         col1, col2, col3 = st.columns(3)
         with col1:
-            gtts_lang = st.selectbox("Language", ["en", "hi", "es", "fr", "de", "it", "pt", "ja", "ko", "zh-CN"], key="gtts_lang")
+            selected_lang_name = st.selectbox(
+                "Language", 
+                list(indian_langs.keys()),
+                index=0,
+                key="gtts_lang_selector"
+            )
+            gtts_lang = indian_langs[selected_lang_name]
         with col2:
             gtts_slow = st.checkbox("Slow mode", value=False, key="gtts_slow")
         with col3:
             gtts_autoplay = st.checkbox("Autoplay", value=True, key="gtts_autoplay")
+        
+        # Sample texts for different languages
+        sample_texts = {
+            "en": "Hello! This is a test of Google Text-to-Speech.",
+            "hi": "नमस्ते! यह गूगल टेक्स्ट-टू-स्पीच का परीक्षण है।",
+            "bn": "হ্যালো! এটি গুগল টেক্সট-টু-স্পিচের একটি পরীক্ষা।",
+            "ta": "வணக்கம்! இது கூகுள் உரை-இருந்து-பேச்சு சோதனை.",
+            "te": "హలో! ఇది గూగుల్ టెక్స్ట్-టు-స్పీచ్ పరీక్ష.",
+            "kn": "ಹಲೋ! ಇದು ಗೂಗಲ್ ಟೆಕ್ಸ್ಟ್-ಟು-ಸ್ಪೀಚ್ ಪರೀಕ್ಷೆ.",
+            "ml": "ഹലോ! ഇത് ഗൂഗിൾ ടെക്സ്റ്റ്-ടു-സ്പീച്ച് പരീക്ഷണമാണ്.",
+            "mr": "नमस्कार! हे गूगल टेक्स्ट-टू-स्पीच चाचणी आहे.",
+            "gu": "હેલો! આ ગૂગલ ટેક્સ્ટ-ટુ-સ્પીચ ટેસ્ટ છે.",
+            "pa": "ਸਤ ਸ੍ਰੀ ਅਕਾਲ! ਇਹ ਗੂਗਲ ਟੈਕਸਟ-ਟੂ-ਸਪੀਚ ਦੀ ਜਾਂਚ ਹੈ।",
+        }
+        
+        if st.button(f"📝 Load {selected_lang_name} Sample", key="load_sample"):
+            st.session_state.gtts_text = sample_texts.get(gtts_lang, sample_texts["en"])
+            st.rerun()
         
         if st.button("🔊 Speak with gTTS", key="speak_gtts"):
             if gtts_text:
                 speak_text_gtts_visible(gtts_text, lang=gtts_lang, slow=gtts_slow, autoplay=gtts_autoplay)
             else:
                 st.warning("Please enter some text to speak")
+        
+        # Show supported languages info
+        with st.expander("ℹ️ Supported Indian Languages"):
+            st.markdown("""
+            | Language | Code | Script |
+            |----------|------|--------|
+            | English | en | Latin |
+            | Hindi | hi | देवनागरी |
+            | Bengali | bn | বাংলা |
+            | Tamil | ta | தமிழ் |
+            | Telugu | te | తెలుగు |
+            | Kannada | kn | ಕನ್ನಡ |
+            | Malayalam | ml | മലയാളം |
+            | Marathi | mr | मराठी |
+            | Gujarati | gu | ગુજરાતી |
+            | Punjabi | pa | ਪੰਜਾਬੀ |
+            """)
     else:
         st.warning("gTTS is not installed. Install with: pip install gTTS")
         

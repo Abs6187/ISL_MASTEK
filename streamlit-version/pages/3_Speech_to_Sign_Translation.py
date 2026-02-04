@@ -17,6 +17,8 @@ if 'speech_audio_key' not in st.session_state:
     st.session_state.speech_audio_key = 0
 if 'last_spoken_letter' not in st.session_state:
     st.session_state.last_spoken_letter = None
+if 'speech_tts_language' not in st.session_state:
+    st.session_state.speech_tts_language = "en"
 
 st.set_page_config(page_title="Speech to Sign Language ", page_icon="🎙️", layout="wide")
 
@@ -84,6 +86,26 @@ def load_image(file_name):
                 return os.path.join(folder_path, actual_file)
     
     return None
+
+# Language selection for audio pronunciation (shown for both cloud and local)
+st.markdown("### 🌐 Language Settings")
+try:
+    from utils.browser_tts import get_indian_languages, is_gtts_available
+    if is_gtts_available():
+        languages = get_indian_languages()
+        selected_lang_name = st.selectbox(
+            "Select language for audio pronunciation:",
+            list(languages.keys()),
+            index=0,
+            key="speech_lang_selector"
+        )
+        st.session_state.speech_tts_language = languages[selected_lang_name]
+    else:
+        st.info("gTTS not available - audio will use English")
+except ImportError:
+    st.info("Language module not available")
+
+st.markdown("---")
 
 # Check if speech recognition is available
 if not SPEECH_RECOGNITION_AVAILABLE:
@@ -333,33 +355,39 @@ if not SPEECH_RECOGNITION_AVAILABLE:
         if image_path:
             st.image(image_path, caption=f'ISL Sign for "{st.session_state.detected_letter}"', width=300)
             
-            # Use gTTS to speak the letter - only if it's a new letter
+            # Use gTTS to speak the letter in selected language - only if it's a new letter
             current_letter = st.session_state.detected_letter
+            lang = st.session_state.speech_tts_language
+            
             if st.session_state.last_spoken_letter != current_letter:
                 try:
-                    from utils.browser_tts import speak_text_gtts_visible, is_gtts_available
+                    from utils.browser_tts import speak_text_gtts_visible, is_gtts_available, get_letter_pronunciation
                     if is_gtts_available():
-                        st.markdown("#### 🔊 Audio Pronunciation")
-                        speak_text_gtts_visible(f"The letter {current_letter}", autoplay=True)
+                        pronunciation_text = get_letter_pronunciation(current_letter, lang)
+                        st.markdown(f"#### 🔊 Audio Pronunciation ({lang.upper()})")
+                        speak_text_gtts_visible(pronunciation_text, lang=lang, autoplay=True)
                         st.session_state.last_spoken_letter = current_letter
                 except Exception as e:
                     pass  # TTS is optional
             else:
                 # Show audio controls without autoplay for repeat plays
                 try:
-                    from utils.browser_tts import speak_text_gtts_visible, is_gtts_available
+                    from utils.browser_tts import speak_text_gtts_visible, is_gtts_available, get_letter_pronunciation
                     if is_gtts_available():
-                        st.markdown("#### 🔊 Audio Pronunciation")
-                        speak_text_gtts_visible(f"The letter {current_letter}", autoplay=False)
+                        pronunciation_text = get_letter_pronunciation(current_letter, lang)
+                        st.markdown(f"#### 🔊 Audio Pronunciation ({lang.upper()})")
+                        speak_text_gtts_visible(pronunciation_text, lang=lang, autoplay=False)
                 except Exception:
                     pass
         else:
             st.error(f'Image for letter "{st.session_state.detected_letter}" not found.')
         
-        # Clear button
-        if st.button("Clear", key="clear_letter"):
+        # Clear button with better styling
+        st.markdown("---")
+        if st.button("🗑️ Clear All & Reset", key="clear_letter", use_container_width=True):
             st.session_state.detected_letter = None
             st.session_state.last_spoken_letter = None
+            st.session_state.speech_audio_key += 1
             st.rerun()
     
     st.stop()
@@ -480,12 +508,14 @@ try:
                 # Increment audio key to force fresh audio
                 st.session_state.speech_audio_key += 1
                 
-                # Use gTTS to speak the letter with fresh audio
+                # Use gTTS to speak the letter with fresh audio in selected language
                 try:
-                    from utils.browser_tts import speak_text_gtts_visible, is_gtts_available
+                    from utils.browser_tts import speak_text_gtts_visible, is_gtts_available, get_letter_pronunciation
                     if is_gtts_available():
-                        st.markdown("#### 🔊 Audio Pronunciation")
-                        speak_text_gtts_visible(f"The letter {recognized_text.upper()}", autoplay=True)
+                        lang = st.session_state.speech_tts_language
+                        pronunciation_text = get_letter_pronunciation(recognized_text.upper(), lang)
+                        st.markdown(f"#### 🔊 Audio Pronunciation ({lang.upper()})")
+                        speak_text_gtts_visible(pronunciation_text, lang=lang, autoplay=True)
                 except Exception:
                     pass  # TTS is optional
         

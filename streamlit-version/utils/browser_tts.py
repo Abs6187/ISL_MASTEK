@@ -18,6 +18,54 @@ try:
 except ImportError:
     GTTS_AVAILABLE = False
 
+# Supported Indian Languages for gTTS
+INDIAN_LANGUAGES = {
+    "English": "en",
+    "Hindi (हिन्दी)": "hi",
+    "Bengali (বাংলা)": "bn",
+    "Tamil (தமிழ்)": "ta",
+    "Telugu (తెలుగు)": "te",
+    "Kannada (ಕನ್ನಡ)": "kn",
+    "Malayalam (മലയാളം)": "ml",
+    "Marathi (मराठी)": "mr",
+    "Gujarati (ગુજરાતી)": "gu",
+    "Punjabi (ਪੰਜਾਬੀ)": "pa",
+}
+
+# Letter pronunciations in different Indian languages
+LETTER_PRONUNCIATIONS = {
+    "en": lambda letter: f"The letter {letter}",
+    "hi": lambda letter: f"अक्षर {letter}",
+    "bn": lambda letter: f"অক্ষর {letter}",
+    "ta": lambda letter: f"எழுத்து {letter}",
+    "te": lambda letter: f"అక్షరం {letter}",
+    "kn": lambda letter: f"ಅಕ್ಷರ {letter}",
+    "ml": lambda letter: f"അക്ഷരം {letter}",
+    "mr": lambda letter: f"अक्षर {letter}",
+    "gu": lambda letter: f"અક્ષર {letter}",
+    "pa": lambda letter: f"ਅੱਖਰ {letter}",
+}
+
+def get_letter_pronunciation(letter: str, lang: str = "en") -> str:
+    """
+    Get the pronunciation text for a letter in the specified language.
+    
+    Args:
+        letter: The letter to pronounce (A-Z)
+        lang: Language code (default 'en')
+    
+    Returns:
+        str: The pronunciation text in the specified language
+    """
+    if lang in LETTER_PRONUNCIATIONS:
+        return LETTER_PRONUNCIATIONS[lang](letter)
+    return LETTER_PRONUNCIATIONS["en"](letter)
+
+
+def get_indian_languages() -> dict:
+    """Return the dictionary of supported Indian languages."""
+    return INDIAN_LANGUAGES.copy()
+
 
 def _generate_unique_audio_id(text: str) -> str:
     """

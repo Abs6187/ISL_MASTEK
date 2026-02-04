@@ -7,11 +7,17 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 st.set_page_config(page_title="Text to Sign Language", page_icon="📝", layout="wide")
 
-# Initialize session state for audio tracking
+# Initialize session state for audio tracking and language
 if 'tts_current_letter' not in st.session_state:
     st.session_state.tts_current_letter = None
 if 'tts_audio_key' not in st.session_state:
     st.session_state.tts_audio_key = 0
+if 'tts_language' not in st.session_state:
+    st.session_state.tts_language = "en"
+if 'show_sign_result' not in st.session_state:
+    st.session_state.show_sign_result = False
+if 'current_sign_letter' not in st.session_state:
+    st.session_state.current_sign_letter = None
 
 # Material UI Color Schema
 st.markdown("""
@@ -49,6 +55,26 @@ st.markdown("""
     </h6>
     """, unsafe_allow_html=True)
 
+# Language selection for audio pronunciation
+st.markdown("### 🌐 Language Settings")
+try:
+    from utils.browser_tts import get_indian_languages, is_gtts_available
+    if is_gtts_available():
+        languages = get_indian_languages()
+        selected_lang_name = st.selectbox(
+            "Select language for audio pronunciation:",
+            list(languages.keys()),
+            index=0,
+            key="lang_selector"
+        )
+        st.session_state.tts_language = languages[selected_lang_name]
+    else:
+        st.info("gTTS not available - audio will use English")
+except ImportError:
+    st.info("Language module not available")
+
+st.markdown("---")
+
 text = st.text_input('Enter text here:', '')
 text = text.lower()
 
@@ -74,10 +100,28 @@ def load_image(file_name):
     
     return None 
 
-# Create a placeholder for audio that will be cleared on each generation
+# Create placeholders for results
 audio_placeholder = st.empty()
+image_placeholder = st.empty()
 
-if st.button('Generate Image'):
+# Button row
+col1, col2 = st.columns([1, 1])
+with col1:
+    generate_btn = st.button('🎯 Generate Sign', use_container_width=True)
+with col2:
+    clear_btn = st.button('🗑️ Clear All', use_container_width=True)
+
+# Handle clear button
+if clear_btn:
+    st.session_state.tts_current_letter = None
+    st.session_state.tts_audio_key += 1
+    st.session_state.show_sign_result = False
+    st.session_state.current_sign_letter = None
+    audio_placeholder.empty()
+    image_placeholder.empty()
+    st.rerun()
+
+if generate_btn:
     if text == '':
         st.write('Please enter some text.')
     elif len(text.split()) > 1:
@@ -94,22 +138,51 @@ if st.button('Generate Image'):
         if image is None:
             st.write('Image not found. Please try again.')
         else:
-            st.image(image, caption='Generated Image', width=300)
+            # Store state
+            st.session_state.show_sign_result = True
+            st.session_state.current_sign_letter = text.upper()
+            
+            with image_placeholder.container():
+                st.image(image, caption=f'ISL Sign for "{text.upper()}"', width=300)
             
             # Increment audio key to force new audio element
             st.session_state.tts_audio_key += 1
             st.session_state.tts_current_letter = text.upper()
             
-            # Use gTTS to speak the letter with fresh audio
+            # Use gTTS to speak the letter with fresh audio in selected language
             try:
-                from utils.browser_tts import speak_text_gtts_visible, is_gtts_available
+                from utils.browser_tts import speak_text_gtts_visible, is_gtts_available, get_letter_pronunciation
                 if is_gtts_available():
+                    # Get pronunciation in selected language
+                    lang = st.session_state.tts_language
+                    pronunciation_text = get_letter_pronunciation(text.upper(), lang)
+                    
                     # Clear previous audio and create new
                     with audio_placeholder.container():
-                        st.markdown("#### 🔊 Audio Pronunciation")
-                        speak_text_gtts_visible(f"The letter {text.upper()}", autoplay=True)
+                        st.markdown(f"#### 🔊 Audio Pronunciation ({lang.upper()})")
+                        speak_text_gtts_visible(pronunciation_text, lang=lang, autoplay=True)
             except Exception:
                 pass  # TTS is optional
+
+# Show previously generated result if exists
+elif st.session_state.show_sign_result and st.session_state.current_sign_letter:
+    letter = st.session_state.current_sign_letter
+    image = load_image(letter.lower() + '.jpg')
+    if image:
+        with image_placeholder.container():
+            st.image(image, caption=f'ISL Sign for "{letter}"', width=300)
+        
+        # Show audio controls without autoplay for returning to page
+        try:
+            from utils.browser_tts import speak_text_gtts_visible, is_gtts_available, get_letter_pronunciation
+            if is_gtts_available():
+                lang = st.session_state.tts_language
+                pronunciation_text = get_letter_pronunciation(letter, lang)
+                with audio_placeholder.container():
+                    st.markdown(f"#### 🔊 Audio Pronunciation ({lang.upper()})")
+                    speak_text_gtts_visible(pronunciation_text, lang=lang, autoplay=False)
+        except Exception:
+            pass
 
 
 st.markdown("""
