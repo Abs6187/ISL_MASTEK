@@ -157,7 +157,7 @@ if not SPEECH_RECOGNITION_AVAILABLE:
                     document.getElementById('speech-text').value = 'You said: ' + transcript;
                     
                     // Extract letter
-                    const match = transcript.toLowerCase().match(/letter\\s*([a-z])/);
+                    const match = transcript.toLowerCase().match(/letter\s*([a-z])/);
                     if (match) {
                         const letter = match[1].toUpperCase();
                         document.getElementById('status').className = 'status-info';
@@ -266,6 +266,7 @@ def listen_for_alphabets():
 def load_image(file_name):
     """
     Searches for an image file in the 'assets/images' directory.
+    Uses case-insensitive matching to handle mixed case filenames.
     
     Args:
         file_name (str): Name of the file to find (e.g., "a.jpg")
@@ -273,14 +274,22 @@ def load_image(file_name):
     Returns:
         str: Absolute path to the image if found, else None.
     """
-    
     folder_path = os.path.join(os.path.dirname(__file__), '..', 'assets', 'images')
-
-    image = os.path.join(folder_path, file_name)
-    if os.path.exists(image):
-        return image
-    else:
-        return None 
+    
+    # Get the base name without extension
+    base_name = file_name.rsplit('.', 1)[0] if '.' in file_name else file_name
+    
+    # Try to find the file with case-insensitive matching
+    if os.path.exists(folder_path):
+        for actual_file in os.listdir(folder_path):
+            actual_base = actual_file.rsplit('.', 1)[0] if '.' in actual_file else actual_file
+            actual_ext = actual_file.rsplit('.', 1)[1].lower() if '.' in actual_file else ''
+            
+            # Match base name (case-insensitive) and check for image extensions
+            if actual_base.lower() == base_name.lower() and actual_ext in ['jpg', 'jpeg', 'png', 'gif']:
+                return os.path.join(folder_path, actual_file)
+    
+    return None 
 
 
 st.header("Listen for Alphabets")

@@ -43,12 +43,26 @@ text = st.text_input('Enter text here:', '')
 text = text.lower()
 
 def load_image(file_name):
+    """
+    Load image file with case-insensitive matching.
+    Handles mixed case file extensions (.jpg, .JPG, .Jpg, etc.)
+    """
     folder_path = os.path.join(os.path.dirname(__file__), '..', 'assets', 'images')
-    image = os.path.join(folder_path, file_name)
-    if os.path.exists(image):
-        return image
-    else:
-        return None 
+    
+    # Get the base name without extension
+    base_name = file_name.rsplit('.', 1)[0] if '.' in file_name else file_name
+    
+    # Try to find the file with case-insensitive matching
+    if os.path.exists(folder_path):
+        for actual_file in os.listdir(folder_path):
+            actual_base = actual_file.rsplit('.', 1)[0] if '.' in actual_file else actual_file
+            actual_ext = actual_file.rsplit('.', 1)[1].lower() if '.' in actual_file else ''
+            
+            # Match base name (case-insensitive) and check for image extensions
+            if actual_base.lower() == base_name.lower() and actual_ext in ['jpg', 'jpeg', 'png', 'gif']:
+                return os.path.join(folder_path, actual_file)
+    
+    return None 
 
 if st.button('Generate Image'):
     if text == '':
