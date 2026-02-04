@@ -6,6 +6,12 @@ import os
 # Add parent directory to path for utils
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
+# Initialize session state for settings
+if 'selected_model' not in st.session_state:
+    st.session_state.selected_model = 'standard'
+if 'sample_text_loaded' not in st.session_state:
+    st.session_state.sample_text_loaded = None
+
 # Set dark theme
 st.set_page_config(page_title="Settings", page_icon="⚙️", layout="centered")
 
@@ -35,16 +41,71 @@ st.markdown("""
 
 st.title("Settings")
 
+# Model Selection Section
+st.markdown("## 🧠 Recognition Model Selection")
+st.info("Choose between standard MLP models or advanced deep learning model")
+
+model_options = {
+    "Standard MLP (Fast)": "standard",
+    "Advanced Deep Learning (H5)": "advanced"
+}
+
+selected_model_name = st.selectbox(
+    "Select Recognition Model:",
+    list(model_options.keys()),
+    index=0 if st.session_state.selected_model == 'standard' else 1,
+    key="model_selector"
+)
+
+# Update session state
+st.session_state.selected_model = model_options[selected_model_name]
+
+if st.session_state.selected_model == 'standard':
+    st.success("✅ **Standard MLP Model** - Fast inference, good accuracy for basic signs")
+    st.markdown("""
+    - Uses pickle-based MLP models
+    - Separate models for alphabets (42/84 features) and numbers
+    - Optimized for speed
+    """)
+else:
+    st.success("🚀 **Advanced H5 Model** - Deep learning with higher accuracy")
+    st.markdown("""
+    - Uses TensorFlow/Keras H5 model
+    - Better generalization for complex gestures
+    - May be slower but more accurate
+    """)
+    
+    # Check if H5 model exists
+    h5_model_path = os.path.join(os.path.dirname(__file__), '..', 'assets', 'models', 'sign_language_recognition.h5')
+    if os.path.exists(h5_model_path):
+        st.success(f"✅ H5 model found: sign_language_recognition.h5")
+    else:
+        st.warning("⚠️ H5 model not found. Please add sign_language_recognition.h5 to assets/models/")
+
+st.markdown("---")
+
 # gTTS Section - More reliable
 st.markdown("## 🔊 Google Text-to-Speech (gTTS)")
 st.info("✅ **Recommended** - Works reliably in all browsers and cloud deployments")
+
+# Sample texts for different languages
+sample_texts = {
+    "en": "Hello! This is a test of Google Text-to-Speech.",
+    "hi": "नमस्ते! यह गूगल टेक्स्ट-टू-स्पीच का परीक्षण है।",
+    "bn": "হ্যালো! এটি গুগল টেক্সট-টু-স্পিচের একটি পরীক্ষা।",
+    "ta": "வணக்கம்! இது கூகுள் உரை-இருந்து-பேச்சு சோதனை.",
+    "te": "హలో! ఇది గూగుల్ టెక్స్ట్-టు-స్పీచ్ పరీక్ష.",
+    "kn": "ಹಲೋ! ಇದು ಗೂಗಲ್ ಟೆಕ್ಸ್ಟ್-ಟು-ಸ್ಪೀಚ್ ಪರೀಕ್ಷೆ.",
+    "ml": "ഹലോ! ഇത് ഗൂഗിൾ ടെക്സ്റ്റ്-ടു-സ്പീച്ച് പരീക്ഷണമാണ്.",
+    "mr": "नमस्कार! हे गूगल टेक्स्ट-टू-स्पीच चाचणी आहे.",
+    "gu": "હેલો! આ ગૂગલ ટેક્સ્ટ-ટુ-સ્પીચ ટેસ્ટ છે.",
+    "pa": "ਸਤ ਸ੍ਰੀ ਅਕਾਲ! ਇਹ ਗੂਗਲ ਟੈਕਸਟ-ਟੂ-ਸਪੀਚ ਦੀ ਜਾਂਚ ਹੈ।",
+}
 
 try:
     from utils.browser_tts import speak_text_gtts_visible, is_gtts_available, get_indian_languages
     
     if is_gtts_available():
-        gtts_text = st.text_input("Text to speak with gTTS:", value="Hello! This is a test of Google Text-to-Speech.", key="gtts_text")
-        
         # Get Indian languages
         indian_langs = get_indian_languages()
         
@@ -62,29 +123,27 @@ try:
         with col3:
             gtts_autoplay = st.checkbox("Autoplay", value=True, key="gtts_autoplay")
         
-        # Sample texts for different languages
-        sample_texts = {
-            "en": "Hello! This is a test of Google Text-to-Speech.",
-            "hi": "नमस्ते! यह गूगल टेक्स्ट-टू-स्पीच का परीक्षण है।",
-            "bn": "হ্যালো! এটি গুগল টেক্সট-টু-স্পিচের একটি পরীক্ষা।",
-            "ta": "வணக்கம்! இது கூகுள் உரை-இருந்து-பேச்சு சோதனை.",
-            "te": "హలో! ఇది గూగుల్ టెక్స్ట్-టు-స్పీచ్ పరీక్ష.",
-            "kn": "ಹಲೋ! ಇದು ಗೂಗಲ್ ಟೆಕ್ಸ್ಟ್-ಟು-ಸ್ಪೀಚ್ ಪರೀಕ್ಷೆ.",
-            "ml": "ഹലോ! ഇത് ഗൂഗിൾ ടെക്സ്റ്റ്-ടു-സ്പീച്ച് പരീക്ഷണമാണ്.",
-            "mr": "नमस्कार! हे गूगल टेक्स्ट-टू-स्पीच चाचणी आहे.",
-            "gu": "હેલો! આ ગૂગલ ટેક્સ્ટ-ટુ-સ્પીચ ટેસ્ટ છે.",
-            "pa": "ਸਤ ਸ੍ਰੀ ਅਕਾਲ! ਇਹ ਗੂਗਲ ਟੈਕਸਟ-ਟੂ-ਸਪੀਚ ਦੀ ਜਾਂਚ ਹੈ।",
-        }
+        # Determine default text - use sample if just loaded, otherwise default
+        default_text = sample_texts.get(st.session_state.sample_text_loaded, "Hello! This is a test of Google Text-to-Speech.")
+        if st.session_state.sample_text_loaded:
+            default_text = sample_texts.get(st.session_state.sample_text_loaded, default_text)
         
-        if st.button(f"📝 Load {selected_lang_name} Sample", key="load_sample"):
-            st.session_state.gtts_text = sample_texts.get(gtts_lang, sample_texts["en"])
-            st.rerun()
+        gtts_text = st.text_area("Text to speak with gTTS:", value=default_text, height=100, key="gtts_text_area")
         
-        if st.button("🔊 Speak with gTTS", key="speak_gtts"):
-            if gtts_text:
-                speak_text_gtts_visible(gtts_text, lang=gtts_lang, slow=gtts_slow, autoplay=gtts_autoplay)
-            else:
-                st.warning("Please enter some text to speak")
+        col_btn1, col_btn2 = st.columns(2)
+        with col_btn1:
+            if st.button(f"📝 Load {selected_lang_name} Sample", key="load_sample"):
+                st.session_state.sample_text_loaded = gtts_lang
+                st.rerun()
+        
+        with col_btn2:
+            if st.button("🔊 Speak with gTTS", key="speak_gtts"):
+                if gtts_text:
+                    # Clear the loaded sample flag
+                    st.session_state.sample_text_loaded = None
+                    speak_text_gtts_visible(gtts_text, lang=gtts_lang, slow=gtts_slow, autoplay=gtts_autoplay)
+                else:
+                    st.warning("Please enter some text to speak")
         
         # Show supported languages info
         with st.expander("ℹ️ Supported Indian Languages"):
@@ -415,3 +474,69 @@ browser_tts_html = """
 
 # Render the HTML in an iframe using components.html()
 components.html(browser_tts_html, height=750, scrolling=True)
+
+st.markdown("---")
+
+# Feedback Popup Section
+st.markdown("## 💬 Feedback & Support")
+
+# Create a popup-style expander
+with st.expander("📝 Send Feedback (Click to Open)", expanded=False):
+    st.markdown("""
+    <style>
+        .feedback-container {
+            background: linear-gradient(135deg, #1E1E1E 0%, #2A2A3A 100%);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #00BCD4;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    feedback_type = st.selectbox(
+        "Feedback Type:",
+        ["Bug Report", "Feature Request", "General Feedback", "Question"],
+        key="feedback_type"
+    )
+    
+    feedback_text = st.text_area(
+        "Your Feedback:",
+        placeholder="Describe your feedback here...",
+        height=150,
+        key="feedback_text"
+    )
+    
+    feedback_email = st.text_input(
+        "Your Email (optional):",
+        placeholder="your@email.com",
+        key="feedback_email"
+    )
+    
+    if st.button("📤 Submit Feedback", key="submit_feedback"):
+        if feedback_text:
+            st.success("✅ Thank you for your feedback! We appreciate your input.")
+            st.balloons()
+            # In a real app, you would send this to a backend/email service
+        else:
+            st.warning("Please enter some feedback before submitting.")
+
+# Info about port 5000 API (if applicable)
+with st.expander("🔌 API Server Info", expanded=False):
+    st.markdown("""
+    ### Backend API Server
+    
+    If you're running the web game version, a Flask API server runs on **port 5000**.
+    
+    **Endpoints:**
+    - `POST /predict` - Sign language recognition
+    - `GET /health` - Health check
+    
+    **Example:**
+    ```bash
+    curl -X POST http://localhost:5000/predict \
+        -H "Content-Type: application/json" \
+        -d '{"landmarks": [...]}'
+    ```
+    
+    *Note: The Streamlit Cloud version uses browser-based processing and doesn't require the API server.*
+    """)

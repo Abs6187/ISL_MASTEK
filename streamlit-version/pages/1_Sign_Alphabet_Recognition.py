@@ -23,6 +23,12 @@ from utils.browser_tts import speak_text
 # Import event loop manager to suppress aioice warnings and configure event loop
 import utils.event_loop_manager
 
+# Initialize session state for model selection
+if 'selected_model' not in st.session_state:
+    st.session_state.selected_model = 'standard'
+if 'last_spoken_char' not in st.session_state:
+    st.session_state.last_spoken_char = None
+
 st.set_page_config(page_title="Real-Time Sign Alphabet Detection", page_icon="🖐️", layout="wide")
 
 # Material UI Color Schema
@@ -84,6 +90,18 @@ model_42 = model_42_dict['model']
 model_path_84 = os.path.join(os.path.dirname(__file__), '..', 'assets', 'models', 'mlp_model_2.p')
 model_84_dict = pickle.load(open(model_path_84, 'rb'))
 model_84 = model_84_dict['model']
+
+# Try to load advanced H5 model if available
+model_h5 = None
+model_h5_available = False
+try:
+    import tensorflow as tf
+    h5_model_path = os.path.join(os.path.dirname(__file__), '..', 'assets', 'models', 'sign_language_recognition.h5')
+    if os.path.exists(h5_model_path):
+        model_h5 = tf.keras.models.load_model(h5_model_path)
+        model_h5_available = True
+except Exception:
+    model_h5_available = False
 
 # Initialize MediaPipe Tasks Hand Landmarker
 model_path_task = os.path.join(os.path.dirname(__file__), '..', 'assets', 'models', 'hand_landmarker.task')
@@ -192,6 +210,23 @@ class SignAlphabetProcessor(VideoProcessorBase):
         # Convert back to av.VideoFrame
         return av.VideoFrame.from_ndarray(img, format="bgr24")
 
+
+# Model selection indicator and Clear button
+col_model, col_clear = st.columns([3, 1])
+with col_model:
+    current_model = st.session_state.get('selected_model', 'standard')
+    if current_model == 'advanced' and model_h5_available:
+        st.success("🧠 Using: **Advanced H5 Model**")
+    elif current_model == 'advanced' and not model_h5_available:
+        st.warning("⚠️ Advanced model not available, using Standard MLP")
+    else:
+        st.info("🧠 Using: **Standard MLP Model**")
+
+with col_clear:
+    if st.button("🗑️ Clear", key="clear_alphabet", help="Clear recognition state and audio cache"):
+        st.session_state.last_spoken_char = None
+        st.session_state.pop('last_spoken_char', None)
+        st.rerun()
 
 # Create WebRTC context
 st.info("📹 Click 'START' to enable camera. Grant browser camera permission when prompted.")
