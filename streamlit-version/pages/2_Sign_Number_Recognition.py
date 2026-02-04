@@ -220,7 +220,6 @@ with col_model:
 
 with col_clear:
     if st.button("🗑️ Clear", key="clear_number", help="Clear recognition state and audio cache"):
-        st.session_state.last_spoken_number = None
         st.session_state.pop('last_spoken_number', None)
         st.rerun()
 

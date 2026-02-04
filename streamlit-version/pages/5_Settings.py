@@ -79,6 +79,7 @@ else:
     h5_model_path = os.path.join(os.path.dirname(__file__), '..', 'assets', 'models', 'sign_language_recognition.h5')
     if os.path.exists(h5_model_path):
         st.success(f"✅ H5 model found: sign_language_recognition.h5")
+        st.info("🔧 **Note:** H5 model integration with real-time WebRTC is in progress. Currently using MLP for live recognition.")
     else:
         st.warning("⚠️ H5 model not found. Please add sign_language_recognition.h5 to assets/models/")
 
@@ -124,9 +125,10 @@ try:
             gtts_autoplay = st.checkbox("Autoplay", value=True, key="gtts_autoplay")
         
         # Determine default text - use sample if just loaded, otherwise default
-        default_text = sample_texts.get(st.session_state.sample_text_loaded, "Hello! This is a test of Google Text-to-Speech.")
         if st.session_state.sample_text_loaded:
-            default_text = sample_texts.get(st.session_state.sample_text_loaded, default_text)
+            default_text = sample_texts.get(st.session_state.sample_text_loaded, "Hello! This is a test of Google Text-to-Speech.")
+        else:
+            default_text = "Hello! This is a test of Google Text-to-Speech."
         
         gtts_text = st.text_area("Text to speak with gTTS:", value=default_text, height=100, key="gtts_text_area")
         
