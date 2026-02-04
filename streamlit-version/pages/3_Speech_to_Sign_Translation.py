@@ -269,7 +269,7 @@ if not SPEECH_RECOGNITION_AVAILABLE:
                 
                 // Extract letter - match "letter X" or just single letters
                 let letter = null;
-                const letterMatch = transcript.toLowerCase().match(/letter\s*([a-z])/i);
+                const letterMatch = transcript.toLowerCase().match(/letter\\s*([a-z])/i);
                 if (letterMatch) {
                     letter = letterMatch[1].toUpperCase();
                 } else {
