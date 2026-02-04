@@ -10,9 +10,13 @@ try:
 except ImportError:
     SPEECH_RECOGNITION_AVAILABLE = False
 
-# Initialize session state for detected letter
+# Initialize session state for detected letter and audio tracking
 if 'detected_letter' not in st.session_state:
     st.session_state.detected_letter = None
+if 'speech_audio_key' not in st.session_state:
+    st.session_state.speech_audio_key = 0
+if 'last_spoken_letter' not in st.session_state:
+    st.session_state.last_spoken_letter = None
 
 st.set_page_config(page_title="Speech to Sign Language ", page_icon="🎙️", layout="wide")
 
@@ -145,7 +149,11 @@ if not SPEECH_RECOGNITION_AVAILABLE:
     
     if show_manual and manual_letter:
         if manual_letter.isalpha():
-            st.session_state.detected_letter = manual_letter
+            # Only update if letter changed to prevent audio caching issues
+            if st.session_state.detected_letter != manual_letter:
+                st.session_state.detected_letter = manual_letter
+                st.session_state.speech_audio_key += 1
+                st.session_state.last_spoken_letter = None  # Reset to allow new audio
         else:
             st.warning("Please enter a valid letter (A-Z)")
     
@@ -308,7 +316,11 @@ if not SPEECH_RECOGNITION_AVAILABLE:
     voice_letter = st.text_input("Detected letter (copy from above or type):", key="voice_letter", max_chars=1).upper()
     if st.button("Use This Letter", key="use_voice") and voice_letter:
         if voice_letter.isalpha():
-            st.session_state.detected_letter = voice_letter
+            # Only update if letter changed to prevent audio caching issues
+            if st.session_state.detected_letter != voice_letter:
+                st.session_state.detected_letter = voice_letter
+                st.session_state.speech_audio_key += 1
+                st.session_state.last_spoken_letter = None  # Reset to allow new audio
         else:
             st.warning("Please enter a valid letter (A-Z)")
     
@@ -321,20 +333,33 @@ if not SPEECH_RECOGNITION_AVAILABLE:
         if image_path:
             st.image(image_path, caption=f'ISL Sign for "{st.session_state.detected_letter}"', width=300)
             
-            # Use gTTS to speak the letter
-            try:
-                from utils.browser_tts import speak_text_gtts_visible, is_gtts_available
-                if is_gtts_available():
-                    st.markdown("#### 🔊 Audio Pronunciation")
-                    speak_text_gtts_visible(f"The letter {st.session_state.detected_letter}", autoplay=True)
-            except Exception as e:
-                pass  # TTS is optional
+            # Use gTTS to speak the letter - only if it's a new letter
+            current_letter = st.session_state.detected_letter
+            if st.session_state.last_spoken_letter != current_letter:
+                try:
+                    from utils.browser_tts import speak_text_gtts_visible, is_gtts_available
+                    if is_gtts_available():
+                        st.markdown("#### 🔊 Audio Pronunciation")
+                        speak_text_gtts_visible(f"The letter {current_letter}", autoplay=True)
+                        st.session_state.last_spoken_letter = current_letter
+                except Exception as e:
+                    pass  # TTS is optional
+            else:
+                # Show audio controls without autoplay for repeat plays
+                try:
+                    from utils.browser_tts import speak_text_gtts_visible, is_gtts_available
+                    if is_gtts_available():
+                        st.markdown("#### 🔊 Audio Pronunciation")
+                        speak_text_gtts_visible(f"The letter {current_letter}", autoplay=False)
+                except Exception:
+                    pass
         else:
             st.error(f'Image for letter "{st.session_state.detected_letter}" not found.')
         
         # Clear button
         if st.button("Clear", key="clear_letter"):
             st.session_state.detected_letter = None
+            st.session_state.last_spoken_letter = None
             st.rerun()
     
     st.stop()
@@ -452,10 +477,14 @@ try:
             else:
                 st.image(image, caption='Generated Image', width=300)
                 
-                # Use gTTS to speak the letter
+                # Increment audio key to force fresh audio
+                st.session_state.speech_audio_key += 1
+                
+                # Use gTTS to speak the letter with fresh audio
                 try:
                     from utils.browser_tts import speak_text_gtts_visible, is_gtts_available
                     if is_gtts_available():
+                        st.markdown("#### 🔊 Audio Pronunciation")
                         speak_text_gtts_visible(f"The letter {recognized_text.upper()}", autoplay=True)
                 except Exception:
                     pass  # TTS is optional

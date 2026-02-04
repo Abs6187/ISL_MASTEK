@@ -7,6 +7,12 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 st.set_page_config(page_title="Text to Sign Language", page_icon="📝", layout="wide")
 
+# Initialize session state for audio tracking
+if 'tts_current_letter' not in st.session_state:
+    st.session_state.tts_current_letter = None
+if 'tts_audio_key' not in st.session_state:
+    st.session_state.tts_audio_key = 0
+
 # Material UI Color Schema
 st.markdown("""
     <style>
@@ -68,6 +74,9 @@ def load_image(file_name):
     
     return None 
 
+# Create a placeholder for audio that will be cleared on each generation
+audio_placeholder = st.empty()
+
 if st.button('Generate Image'):
     if text == '':
         st.write('Please enter some text.')
@@ -87,12 +96,18 @@ if st.button('Generate Image'):
         else:
             st.image(image, caption='Generated Image', width=300)
             
-            # Use gTTS to speak the letter
+            # Increment audio key to force new audio element
+            st.session_state.tts_audio_key += 1
+            st.session_state.tts_current_letter = text.upper()
+            
+            # Use gTTS to speak the letter with fresh audio
             try:
                 from utils.browser_tts import speak_text_gtts_visible, is_gtts_available
                 if is_gtts_available():
-                    st.markdown("#### 🔊 Audio Pronunciation")
-                    speak_text_gtts_visible(f"The letter {text.upper()}", autoplay=True)
+                    # Clear previous audio and create new
+                    with audio_placeholder.container():
+                        st.markdown("#### 🔊 Audio Pronunciation")
+                        speak_text_gtts_visible(f"The letter {text.upper()}", autoplay=True)
             except Exception:
                 pass  # TTS is optional
 

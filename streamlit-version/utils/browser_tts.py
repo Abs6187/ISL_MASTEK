@@ -8,6 +8,8 @@ import streamlit as st
 import streamlit.components.v1 as components
 import base64
 import io
+import time
+import hashlib
 
 # Try to import gTTS
 try:
@@ -15,6 +17,17 @@ try:
     GTTS_AVAILABLE = True
 except ImportError:
     GTTS_AVAILABLE = False
+
+
+def _generate_unique_audio_id(text: str) -> str:
+    """
+    Generate a unique audio ID based on text content and timestamp.
+    This ensures each audio element is unique and prevents caching issues.
+    """
+    # Use hash of text + timestamp for uniqueness
+    text_hash = hashlib.md5(text.encode()).hexdigest()[:8]
+    timestamp = int(time.time() * 1000)
+    return f"tts-audio-{text_hash}-{timestamp}"
 
 
 def speak_text_gtts(text: str, lang: str = 'en', slow: bool = False, autoplay: bool = True):
@@ -47,15 +60,26 @@ def speak_text_gtts(text: str, lang: str = 'en', slow: bool = False, autoplay: b
         audio_bytes = audio_buffer.read()
         b64 = base64.b64encode(audio_bytes).decode()
         
-        # Create HTML audio element with autoplay
+        # Generate unique audio ID to prevent caching
+        audio_id = _generate_unique_audio_id(text)
+        
+        # Create HTML audio element with autoplay and cache-busting
         if autoplay:
             md = f"""
-                <audio id="tts-audio" controls autoplay style="display:none;">
+                <script>
+                    // Stop and remove any previous audio elements
+                    document.querySelectorAll('audio[id^="tts-audio"]').forEach(function(el) {{
+                        el.pause();
+                        el.currentTime = 0;
+                        el.remove();
+                    }});
+                </script>
+                <audio id="{audio_id}" controls autoplay style="display:none;">
                     <source src="data:audio/mp3;base64,{b64}" type="audio/mpeg">
                 </audio>
                 <script>
                     // Ensure audio plays (some browsers block autoplay)
-                    var audio = document.getElementById('tts-audio');
+                    var audio = document.getElementById('{audio_id}');
                     if (audio) {{
                         audio.play().catch(function(e) {{
                             console.log('Autoplay blocked, user interaction required:', e);
@@ -65,7 +89,7 @@ def speak_text_gtts(text: str, lang: str = 'en', slow: bool = False, autoplay: b
             """
         else:
             md = f"""
-                <audio id="tts-audio" controls>
+                <audio id="{audio_id}" controls>
                     <source src="data:audio/mp3;base64,{b64}" type="audio/mpeg">
                 </audio>
             """
@@ -81,6 +105,7 @@ def speak_text_gtts(text: str, lang: str = 'en', slow: bool = False, autoplay: b
 def speak_text_gtts_visible(text: str, lang: str = 'en', slow: bool = False, autoplay: bool = True):
     """
     Same as speak_text_gtts but shows visible audio controls.
+    Uses unique IDs and cache-busting to prevent stale audio playback.
     
     Args:
         text: Text to speak
@@ -107,25 +132,40 @@ def speak_text_gtts_visible(text: str, lang: str = 'en', slow: bool = False, aut
         audio_bytes = audio_buffer.read()
         b64 = base64.b64encode(audio_bytes).decode()
         
-        # Create HTML audio element with visible controls
+        # Generate unique audio ID based on text content and timestamp
+        audio_id = _generate_unique_audio_id(text)
         autoplay_attr = "autoplay" if autoplay else ""
         should_autoplay = "true" if autoplay else "false"
-        import random
-        audio_id = f"tts-audio-visible-{random.randint(1000, 9999)}"
+        
         md = f"""
-            <div style="text-align: center; margin: 10px 0;">
+            <script>
+                // Stop and remove any previous visible audio elements to prevent caching
+                document.querySelectorAll('audio[id^="tts-audio"]').forEach(function(el) {{
+                    el.pause();
+                    el.currentTime = 0;
+                }});
+                document.querySelectorAll('.tts-audio-container').forEach(function(el) {{
+                    el.remove();
+                }});
+            </script>
+            <div class="tts-audio-container" style="text-align: center; margin: 10px 0;">
                 <audio id="{audio_id}" controls {autoplay_attr} style="width: 100%; max-width: 400px;">
                     <source src="data:audio/mp3;base64,{b64}" type="audio/mpeg">
                     Your browser does not support the audio element.
                 </audio>
             </div>
             <script>
-                var audio = document.getElementById('{audio_id}');
-                if (audio && {should_autoplay}) {{
-                    audio.play().catch(function(e) {{
-                        console.log('Autoplay blocked:', e);
-                    }});
-                }}
+                (function() {{
+                    var audio = document.getElementById('{audio_id}');
+                    if (audio && {should_autoplay}) {{
+                        // Small delay to ensure DOM is ready
+                        setTimeout(function() {{
+                            audio.play().catch(function(e) {{
+                                console.log('Autoplay blocked:', e);
+                            }});
+                        }}, 100);
+                    }}
+                }})();
             </script>
         """
         
