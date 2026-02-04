@@ -53,10 +53,18 @@ def get_ice_servers():
         # secrets.toml doesn't exist or can't be read - this is fine, use defaults
         logging.debug(f"No secrets available, using default STUN servers: {e}")
     
-    # 3. Fallback to default free Google STUN servers
+    # 3. Fallback to multiple free STUN servers for better connectivity
+    # Using servers from different providers improves NAT traversal
     return [
+        # Google STUN servers
         {"urls": ["stun:stun.l.google.com:19302"]},
         {"urls": ["stun:stun1.l.google.com:19302"]},
+        # Cloudflare STUN
+        {"urls": ["stun:stun.cloudflare.com:3478"]},
+        # Twilio STUN (free)
+        {"urls": ["stun:global.stun.twilio.com:3478"]},
+        # Microsoft STUN
+        {"urls": ["stun:stunserver.stunprotocol.org:3478"]},
     ]
 
 # STUN/TURN server configuration for WebRTC
@@ -65,12 +73,17 @@ RTC_CONFIGURATION = {
     # Try STUN/TURN relays and direct connections
     "iceTransportPolicy": "all",
     # Optimize ICE candidate gathering
-    "iceCandidatePoolSize": 10,
+    "iceCandidatePoolSize": 0,  # Use browser default (10 can cause issues)
 }
 
-# Media constraints
+# Media constraints with explicit video settings for better compatibility
 MEDIA_STREAM_CONSTRAINTS = {
-    "video": True,
+    "video": {
+        "facingMode": "user",  # Prefer front camera
+        "width": {"ideal": 640, "max": 1280},
+        "height": {"ideal": 480, "max": 720},
+        "frameRate": {"ideal": 15, "max": 30},
+    },
     "audio": False  # We don't need microphone for sign recognition
 }
 

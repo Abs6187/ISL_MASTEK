@@ -191,6 +191,13 @@ class SignNumberProcessor(VideoProcessorBase):
 
 # Create WebRTC context
 st.info("📹 Click 'START' to enable camera. Grant browser camera permission when prompted.")
+st.markdown("""
+    <div style="padding: 10px; background: #2a2a3a; border-radius: 8px; margin-bottom: 15px;">
+        <p style="margin: 0; color: #aaa; font-size: 14px;">
+            💡 <strong>Tips:</strong> Use Chrome/Edge browser • Allow camera permissions • Ensure stable internet connection
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
 webrtc_ctx = webrtc_streamer(
     key="sign-number-recognition",
@@ -198,6 +205,7 @@ webrtc_ctx = webrtc_streamer(
     rtc_configuration=RTC_CONFIGURATION,
     media_stream_constraints=MEDIA_STREAM_CONSTRAINTS,
     async_processing=True,
+    desired_playback_state="started",  # Auto-start camera
 )
 
 # Display prediction outside video

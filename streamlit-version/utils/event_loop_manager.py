@@ -77,8 +77,12 @@ def custom_exception_handler(loop: asyncio.AbstractEventLoop, context: Dict[str,
     
     # For any other exceptions, use default handler
     # This ensures we don't hide genuinely important errors
-    if exception:
-        loop.default_exception_handler(context)
+    try:
+        if loop is not None:
+            loop.default_exception_handler(context)
+    except Exception:
+        # If the event loop is also None, we can't handle this - just suppress
+        pass
 
 
 def configure_event_loop_policy():
@@ -139,26 +143,59 @@ def patch_aioice():
     """
     Monkey-patch aioice to prevent AttributeError: 'NoneType' object has no attribute 'sendto'
     during event loop teardown.
+    
+    This patches both the high-level send_stun method and the low-level socket operations
+    to handle closed transports gracefully.
     """
     try:
         import aioice.ice
     except ImportError:
         return
 
-    # Store original method if not already patched
-    # Target StunProtocol, not Connection
+    # Patch 1: Safe send_stun method
     if not hasattr(aioice.ice.StunProtocol, '_original_send_stun'):
         aioice.ice.StunProtocol._original_send_stun = aioice.ice.StunProtocol.send_stun
 
     def safe_send_stun(self, message, addr):
-        # Check if transport exists before using it
+        # Check if transport exists and is healthy before using it
         if self.transport is None:
             # Transport is closed, silently ignore
             return
-        return self._original_send_stun(message, addr)
+        try:
+            return self._original_send_stun(message, addr)
+        except (AttributeError, OSError, ConnectionResetError):
+            # Ignore any errors that occur during send on closing transport
+            return
 
     # Apply patch to StunProtocol
     aioice.ice.StunProtocol.send_stun = safe_send_stun
+    
+    # Patch 2: Safe datagram_protocol_sendto for asyncio selector events
+    try:
+        from asyncio.selector_events import _SelectorDatagramTransport
+    except ImportError:
+        _SelectorDatagramTransport = None
+    
+    if _SelectorDatagramTransport is not None:
+        if not hasattr(_SelectorDatagramTransport, '_original_sendto'):
+            _SelectorDatagramTransport._original_sendto = _SelectorDatagramTransport.sendto
+        
+        def safe_sendto(self, data, addr=None):
+            # Check if socket exists before sending
+            if self._sock is None:
+                # Socket is closed, silently ignore
+                return
+            if hasattr(self, '_closing') and self._closing:
+                # Transport is closing, silently ignore
+                return
+            try:
+                return self._original_sendto(data, addr)
+            except (AttributeError, OSError, ConnectionResetError, ValueError):
+                # Ignore errors from closed socket
+                return
+        
+        # Apply patch
+        _SelectorDatagramTransport.sendto = safe_sendto
 
 
 # Initialize on module import
