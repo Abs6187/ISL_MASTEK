@@ -27,6 +27,13 @@ app = Flask(__name__,
             static_folder=os.path.join(os.path.dirname(__file__), 'frontend'))
 CORS(app)
 
+
+@app.route('/healthz')
+def healthz():
+    """Health check for Render (and other platforms)."""
+    return '', 200
+
+
 @app.route('/')
 def root():
     return app.send_static_file('index.html')
