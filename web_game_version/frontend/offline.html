@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Signify - Offline</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#6a11cb">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #1c1a29 0%, #2d1b4e 50%, #1c1a29 100%);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #e0e0e0;
+      text-align: center;
+      padding: 24px;
+    }
+    .offline-container {
+      max-width: 480px;
+      padding: 48px 32px;
+      background: rgba(30, 30, 46, 0.85);
+      border-radius: 20px;
+      border: 1px solid rgba(106, 17, 203, 0.3);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+    .offline-icon {
+      font-size: 72px;
+      margin-bottom: 16px;
+      display: block;
+    }
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #6a11cb, #2575fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 12px;
+    }
+    p {
+      font-size: 16px;
+      color: #b0b0b0;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+    .retry-btn {
+      display: inline-block;
+      padding: 14px 36px;
+      background: linear-gradient(135deg, #6a11cb, #2575fc);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .retry-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(106, 17, 203, 0.4);
+    }
+    .tips {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      font-size: 14px;
+      color: #888;
+    }
+    .tips ul {
+      list-style: none;
+      padding: 0;
+      margin-top: 8px;
+    }
+    .tips li {
+      padding: 4px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="offline-container">
+    <span class="offline-icon">📡</span>
+    <h1>You're Offline</h1>
+    <p>
+      It looks like you've lost your internet connection.
+      Signify needs a network connection for sign language recognition.
+    </p>
+    <button class="retry-btn" onclick="window.location.reload()">🔄 Try Again</button>
+    <div class="tips">
+      <strong>Tips:</strong>
+      <ul>
+        <li>📶 Check your Wi-Fi or mobile data</li>
+        <li>✈️ Turn off airplane mode</li>
+        <li>🔄 Refresh once you're back online</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>

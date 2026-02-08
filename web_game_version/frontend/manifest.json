@@ -3,10 +3,12 @@
   "short_name": "Signify",
   "description": "Learn Indian Sign Language through interactive games, quizzes, and real-time gesture recognition.",
   "start_url": "/index.html",
+  "id": "/index.html",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#1c1a29",
   "theme_color": "#6a11cb",
+  "scope": "/",
   "categories": ["education", "games"],
   "icons": [
     {
@@ -14,6 +16,38 @@
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "images/ai_mascot.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "images/icons/icon-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Learn Signs",
+      "short_name": "Learn",
+      "url": "/learn.html",
+      "icons": [{ "src": "images/ai_mascot.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Play Game",
+      "short_name": "Play",
+      "url": "/mode.html",
+      "icons": [{ "src": "images/ai_mascot.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Take Quiz",
+      "short_name": "Quiz",
+      "url": "/qm.html",
+      "icons": [{ "src": "images/ai_mascot.png", "sizes": "192x192" }]
     }
   ]
 }
