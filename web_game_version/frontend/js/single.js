@@ -331,12 +331,13 @@ document.getElementById("home-btn").addEventListener("click", () => {
 });
 
 let predictionInterval = null;
+let lastPredicted = "";
 
 function startPrediction() {
   predictionInterval = setInterval(() => {
     if (!gameActive) return;
     sendFrameToBackend();
-  }, 800); // Optimized for better responsiveness
+  }, 800);
 }
 
 function stopPrediction() {
@@ -362,14 +363,21 @@ function sendFrameToBackend() {
   })
     .then(res => res.json())
     .then(data => {
-      console.log("Prediction API response:", data);
-      // ... rest of your logic ..
       const predictedLetter = data.letter;
-      if (predictedLetter && typeof predictedLetter === "string") {
+      const confidence = data.confidence || 0;
+      if (
+        predictedLetter &&
+        typeof predictedLetter === "string" &&
+        confidence >= 0.5 &&
+        predictedLetter !== lastPredicted
+      ) {
         localStorage.setItem("last_prediction", predictedLetter);
-        handleInput(predictedLetter); // ✅ Simulate keyboard input
+        handleInput(predictedLetter);
+        lastPredicted = predictedLetter;
+        setTimeout(() => { lastPredicted = ""; }, 1500);
       }
-    });
+    })
+    .catch(err => console.error("Prediction error:", err));
 }
 
 function resetGame() {
@@ -381,6 +389,7 @@ function resetGame() {
   answeredQuestions = 0;
   gameActive = true;
   gameStarted = true;
+  lastPredicted = "";
 
   // Clear and reload words
   const category = categorySelect.value;

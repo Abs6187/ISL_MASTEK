@@ -203,38 +203,6 @@ homeBtn.addEventListener("click", () => {
 const storedLeaderboard = JSON.parse(localStorage.getItem("quizLeaderboard") || "[]");
 renderLeaderboard(storedLeaderboard.slice(0, 50), playerName);
 
-function resetGame() {
-  // Reset variables
-  score = 0;
-  streak = 0;
-  currentIndex = 0;
-  timeLeft = 60;
-  answeredQuestions = 0;
-  gameActive = true;
-  gameStarted = true;
-
-  // Clear and reload words
-  const category = categorySelect.value;
-  loadWordList(category);
-
-  // Hide result popup
-  document.getElementById("result-popup").classList.add("hidden");
-
-  // Reset UI
-  categorySelect.disabled = true;
-  updateStats();
-
-  // Restart webcam prediction
-  stopPrediction();
-  startPrediction();
-
-  // Load first question and restart timer
-  setTimeout(() => {
-    loadNextQuestion();
-    startTimer();
-  }, 500);
-}
-
 function sendFrameToBackend() {
   if (!gameStarted || currentType !== "letter-to-sign") return;
   const canvas = document.createElement('canvas');
@@ -252,14 +220,17 @@ function sendFrameToBackend() {
     .then(res => res.json())
     .then(data => {
       const predictedLetter = data.letter;
+      const confidence = data.confidence || 0;
       if (
         predictedLetter &&
         typeof predictedLetter === "string" &&
+        confidence >= 0.5 &&
         predictedLetter !== lastPredicted
       ) {
         localStorage.setItem("last_prediction", predictedLetter);
         handleInput(predictedLetter);
         lastPredicted = predictedLetter;
+        setTimeout(() => { lastPredicted = ""; }, 1500);
       }
     })
     .catch(err => {

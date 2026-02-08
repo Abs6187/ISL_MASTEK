@@ -1,46 +1,37 @@
-const input = document.getElementById("text-input");
 const keys = document.querySelectorAll(".key");
 const image = document.getElementById("sign-image");
 
-// Path builder for valid characters
-function getImageFor(char) {
+function updateImage(char) {
   char = char.toUpperCase();
-  if (!/^[A-Z0-9]$/.test(char)) return "ISL.jpg";
-  return `images/signimages/${char}.jpg`;
+  if (/^[A-Z0-9]$/.test(char)) {
+    image.src = `images/quiz_images/${char}.jpg`;
+    image.onerror = function () {
+      this.src = 'images/quiz_images/A.jpg';
+      this.onerror = null;
+    };
+  } else {
+    image.src = 'images/quiz_images/A.jpg';
+  }
 }
 
-// When typing directly into the input field
-input?.addEventListener("input", () => {
-  const val = input.value.toUpperCase();
-  if (val.length > 1) {
-    input.value = val[0];
-  }
-
-  updateImage(input.value);
-});
-
-// When clicking on the virtual keyboard
 keys.forEach(key => {
   key.addEventListener("click", () => {
     const value = key.textContent.toUpperCase();
-    if (input) input.value = value;
     updateImage(value);
+
+    keys.forEach(k => k.classList.remove("active-key"));
+    key.classList.add("active-key");
   });
 });
 
-// When pressing a key on physical keyboard
 document.addEventListener("keydown", (event) => {
   const char = event.key.toUpperCase();
   if (/^[A-Z0-9]$/.test(char)) {
-    if (input) input.value = char;
     updateImage(char);
+
+    keys.forEach(k => {
+      k.classList.remove("active-key");
+      if (k.textContent === char) k.classList.add("active-key");
+    });
   }
 });
-
-function updateImage(char) {
-  if (/^[A-Z0-9]$/.test(char)) {
-    image.src = `images/images/${char}.jpg`;
-  } else {
-    image.src = "ISL.jpg";
-  }
-}

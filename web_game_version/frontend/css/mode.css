@@ -5,7 +5,7 @@ body {
   font-family: 'Luckiest Guy', cursive;
   background: linear-gradient(135deg, #ff9a9e, #fad0c4, #fad0c4, #fbc2eb, #a18cd1);
   color: white;
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
 .main-container {
@@ -138,4 +138,27 @@ body {
   background: #ffcc00;
   color: black;
   border-color: black;
+}
+
+.floating-app-link {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #6a11cb, #2575fc);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  text-decoration: none;
+  color: white;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  z-index: 9999;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+.floating-app-link:hover {
+  transform: scale(1.15);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
 }

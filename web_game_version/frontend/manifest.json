@@ -1,0 +1,19 @@
+{
+  "name": "Signify - Learn Indian Sign Language",
+  "short_name": "Signify",
+  "description": "Learn Indian Sign Language through interactive games, quizzes, and real-time gesture recognition.",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#1c1a29",
+  "theme_color": "#6a11cb",
+  "categories": ["education", "games"],
+  "icons": [
+    {
+      "src": "images/ai_mascot.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

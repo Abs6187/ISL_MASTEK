@@ -275,3 +275,106 @@ header h1 {
   background-color: #0077aa;
   transform: scale(1.05);
 }
+
+.floating-app-link {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #6a11cb, #2575fc);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  text-decoration: none;
+  color: white;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  z-index: 9999;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+.floating-app-link:hover {
+  transform: scale(1.15);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+@media (max-width: 768px) {
+  body {
+    padding: 10px;
+  }
+
+  header h1 {
+    font-size: 1.6rem;
+  }
+
+  #main-content {
+    flex-direction: column;
+  }
+
+  #left-side {
+    padding-right: 0;
+  }
+
+  #player-info {
+    justify-content: center;
+  }
+
+  .info-box {
+    font-size: 1rem;
+    padding: 8px 10px;
+  }
+
+  #question-text {
+    font-size: 1.3rem;
+  }
+
+  #current-letter {
+    font-size: 1.5rem;
+  }
+
+  #video-box {
+    max-width: 100%;
+    height: 280px;
+  }
+
+  #letter-input {
+    width: 150px;
+    font-size: 1.2rem;
+  }
+
+  #home-btn {
+    top: 10px;
+    left: 10px;
+    font-size: 1.1rem;
+    padding: 8px 12px;
+  }
+
+  #leaderboard {
+    margin-top: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  header h1 {
+    font-size: 1.3rem;
+  }
+
+  .info-box {
+    font-size: 0.85rem;
+    padding: 6px 8px;
+  }
+
+  #video-box {
+    height: 220px;
+  }
+
+  #question-text {
+    font-size: 1.1rem;
+  }
+
+  #control-buttons button {
+    padding: 10px 18px;
+    font-size: 0.95rem;
+  }
+}

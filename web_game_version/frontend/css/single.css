@@ -252,23 +252,102 @@ video#webcam {
   .main-wrapper {
     flex-direction: column;
     align-items: center;
+    padding: 15px;
+    gap: 20px;
   }
 
-  .game-section, .leaderboard-section {
-    width: 90%;
+  .game-section {
+    width: 100%;
+    padding: 16px;
+  }
+
+  .leaderboard-section {
+    width: 100%;
+  }
+
+  .title {
+    font-size: 1.6rem;
+    margin-bottom: 15px;
+  }
+
+  .jumble-box {
+    font-size: 1.4rem;
+  }
+
+  #scrambled-word {
+    font-size: 1.4rem;
+    letter-spacing: 8px;
+  }
+
+  #answer-line {
+    font-size: 1.4rem;
+    letter-spacing: 10px;
   }
 
   video#webcam {
-    width: 90%;
+    width: 100%;
     height: auto;
+    max-height: 300px;
   }
 
   .scoreboard {
     justify-content: center;
+    font-size: 0.95rem;
+    gap: 10px;
   }
 
   .action-buttons {
     flex-direction: column;
+    align-items: center;
+  }
+
+  #quit-btn,
+  #inline-play-again-btn {
+    width: 80%;
+    font-size: 1rem;
+  }
+
+  #home-btn {
+    top: 10px;
+    left: 10px;
+    padding: 8px 14px;
+    font-size: 0.9rem;
+  }
+
+  #timer {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .title {
+    font-size: 1.3rem;
+  }
+
+  .jumble-box {
+    font-size: 1.2rem;
+  }
+
+  #scrambled-word {
+    font-size: 1.2rem;
+    letter-spacing: 6px;
+  }
+
+  #answer-line {
+    font-size: 1.2rem;
+    letter-spacing: 8px;
+  }
+
+  .scoreboard {
+    font-size: 0.85rem;
+  }
+
+  video#webcam {
+    max-height: 240px;
+  }
+
+  .custom-dropdown {
+    font-size: 0.9rem;
   }
 }
 #side-message {
@@ -413,4 +492,27 @@ background-color: #0b1c1f;
 #home-btn:hover {
   background-color: #e2840a;
   transform: scale(1.05);
+}
+
+.floating-app-link {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #6a11cb, #2575fc);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  text-decoration: none;
+  color: white;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  z-index: 9999;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+.floating-app-link:hover {
+  transform: scale(1.15);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
 }
