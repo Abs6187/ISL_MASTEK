@@ -3,7 +3,11 @@ import warnings
 
 # Suppress warnings
 warnings.filterwarnings('ignore', category=UserWarning)
-warnings.filterwarnings('ignore', message='.*InconsistentVersionWarning.*')
+try:
+    from sklearn.exceptions import InconsistentVersionWarning
+    warnings.filterwarnings('ignore', category=InconsistentVersionWarning)
+except ImportError:
+    pass
 
 # Set dark theme with Material UI color schema
 st.set_page_config(
@@ -18,6 +22,11 @@ st.set_page_config(
 # Secondary: Cyan/Teal (#00BCD4, #00ACC1, #4FC3F7)
 # Background: Dark (#0E1117, #1E1E1E, #262730)
 # Text: Light (#FAFAFA, #E0E0E0)
+
+st.markdown("""
+    <style>.floating-game-link{position:fixed;bottom:24px;right:24px;width:56px;height:56px;background:linear-gradient(135deg,#6a11cb,#2575fc);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.8rem;text-decoration:none;color:white;box-shadow:0 4px 15px rgba(0,0,0,0.3);z-index:9999;transition:transform 0.3s,box-shadow 0.3s;}.floating-game-link:hover{transform:scale(1.15);box-shadow:0 6px 20px rgba(0,0,0,0.4);}</style>
+    <a href="https://isl-mastek.onrender.com/" target="_blank" class="floating-game-link" title="Open Web Game">🎮</a>
+""", unsafe_allow_html=True)
 
 st.markdown("""
     <style>

@@ -1,7 +1,15 @@
 import os
 import logging
+import warnings
 from dotenv import load_dotenv
 load_dotenv()
+
+warnings.filterwarnings('ignore', category=UserWarning)
+try:
+    from sklearn.exceptions import InconsistentVersionWarning
+    warnings.filterwarnings('ignore', category=InconsistentVersionWarning)
+except ImportError:
+    pass
 
 from flask import Flask, jsonify, request
 import cv2

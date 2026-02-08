@@ -24,6 +24,11 @@ st.set_page_config(page_title="Speech to Sign Language ", page_icon="🎙️", l
 
 # Material UI Color Schema
 st.markdown("""
+    <style>.floating-game-link{position:fixed;bottom:24px;right:24px;width:56px;height:56px;background:linear-gradient(135deg,#6a11cb,#2575fc);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.8rem;text-decoration:none;color:white;box-shadow:0 4px 15px rgba(0,0,0,0.3);z-index:9999;transition:transform 0.3s,box-shadow 0.3s;}.floating-game-link:hover{transform:scale(1.15);box-shadow:0 6px 20px rgba(0,0,0,0.4);}</style>
+    <a href="https://isl-mastek.onrender.com/" target="_blank" class="floating-game-link" title="Open Web Game">🎮</a>
+""", unsafe_allow_html=True)
+
+st.markdown("""
     <style>
         .stApp {
             background: linear-gradient(135deg, #0E1117 0%, #1a1d29 50%, #262730 100%);
