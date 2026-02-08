@@ -1,107 +1,89 @@
-# Signify PWA - Icon Generation Guide
+# Signify PWA - Icon Status & Guide
 
-## Required Icons
+## ✅ Current Icon Status — All Generated
 
-The PWA needs the following icon files to be fully installable on all devices:
+All PWA icons have been generated from `images/ai_mascot_backup.png` (1024×1024 source) and are in place:
 
-| File | Size | Purpose | Location |
-|------|------|---------|----------|
-| `icon-512x512.png` | 512×512 px | App icon (required for install) | `frontend/images/icons/` |
-| `icon-maskable-512x512.png` | 512×512 px | Adaptive icon (Android) | `frontend/images/icons/` |
-| `ai_mascot.png` | 192×192 px | Small icon ✅ **Already exists** | `frontend/images/` |
+| File | Size | Purpose | Location | Status |
+|------|------|---------|----------|--------|
+| `icon-48x48.png` | 48×48 px | Small icon | `frontend/images/icons/` | ✅ Generated |
+| `icon-72x72.png` | 72×72 px | Medium icon | `frontend/images/icons/` | ✅ Generated |
+| `icon-144x144.png` | 144×144 px | Large icon | `frontend/images/icons/` | ✅ Generated |
+| `icon-192x192.png` | 192×192 px | PWA icon (required) | `frontend/images/icons/` | ✅ Generated |
+| `icon-512x512.png` | 512×512 px | Splash screen (required) | `frontend/images/icons/` | ✅ Generated |
+| `icon-maskable-192x192.png` | 192×192 px | Adaptive icon (Android) | `frontend/images/icons/` | ✅ Generated |
+| `icon-maskable-512x512.png` | 512×512 px | Adaptive icon (Android) | `frontend/images/icons/` | ✅ Generated |
+| `apple-touch-icon.png` | 180×180 px | iOS home screen icon | `frontend/images/icons/` | ✅ Generated |
+| `favicon.ico` | 16/32/48 px | Browser tab icon | `frontend/` | ✅ Generated |
+| `ai_mascot.png` | 192×192 px | Original mascot image | `frontend/images/` | ✅ Existing |
+| `ai_mascot_backup.png` | 1024×1024 px | Source image for generation | `frontend/images/` | ✅ Existing |
 
-## Step 1: Create the icons directory
-
-```bash
-mkdir -p web_game_version/frontend/images/icons
-```
-
-## Step 2: Generate the 512×512 icon
-
-### Option A: Using the existing mascot image (recommended)
-
-Resize `images/ai_mascot.png` to 512×512:
-
-**Using Python (Pillow):**
-```python
-from PIL import Image
-
-img = Image.open('web_game_version/frontend/images/ai_mascot.png')
-img_resized = img.resize((512, 512), Image.LANCZOS)
-img_resized.save('web_game_version/frontend/images/icons/icon-512x512.png')
-print('✅ icon-512x512.png created')
-```
-
-**Using ImageMagick:**
-```bash
-convert images/ai_mascot.png -resize 512x512 images/icons/icon-512x512.png
-```
-
-**Using ffmpeg:**
-```bash
-ffmpeg -i images/ai_mascot.png -vf scale=512:512 images/icons/icon-512x512.png
-```
-
-### Option B: Online tools
-
-1. **PWA Icon Generator**: https://www.pwabuilder.com/imageGenerator
-   - Upload your source image (use `ai_mascot.png` or a custom design)
-   - It generates all required sizes automatically
-
-2. **Favicon.io**: https://favicon.io/
-   - Upload image → download pack with all sizes
-
-3. **RealFaviconGenerator**: https://realfavicongenerator.net/
-   - Best for comprehensive icon pack (favicon, Apple touch, Android)
-
-## Step 3: Generate the maskable icon
-
-Maskable icons need **safe area padding** — the important content should be within the inner 80% circle.
-
-### Option A: Manual with padding
-
-```python
-from PIL import Image, ImageDraw
-
-# Create 512x512 canvas with the app's background color
-canvas = Image.new('RGBA', (512, 512), (28, 26, 41, 255))  # #1c1a29
-
-# Load and resize mascot to fit within safe area (80% = 410px)
-mascot = Image.open('web_game_version/frontend/images/ai_mascot.png')
-mascot = mascot.resize((360, 360), Image.LANCZOS)
-
-# Center the mascot
-offset = ((512 - 360) // 2, (512 - 360) // 2)
-canvas.paste(mascot, offset, mascot if mascot.mode == 'RGBA' else None)
-canvas.save('web_game_version/frontend/images/icons/icon-maskable-512x512.png')
-print('✅ icon-maskable-512x512.png created')
-```
-
-### Option B: Maskable.app
-
-1. Go to https://maskable.app/editor
-2. Upload your icon
-3. Adjust padding to fit the safe zone
-4. Export as 512×512 PNG
-
-## Step 4: Verify
-
-After generating the icons:
+## File Structure
 
 ```
 web_game_version/frontend/
-├── images/
-│   ├── ai_mascot.png              ← 192×192 (already exists)
-│   └── icons/
-│       ├── icon-512x512.png       ← 512×512 (generate this)
-│       └── icon-maskable-512x512.png  ← 512×512 maskable (generate this)
-├── manifest.json                  ← references all icons
-├── sw.js                          ← service worker
-├── pwa.js                         ← PWA registration
-└── offline.html                   ← offline fallback
+├── favicon.ico                            ← Browser tab icon (16/32/48)
+├── manifest.json                          ← References all icons
+├── sw.js                                  ← Service worker (caches icons)
+├── pwa.js                                 ← PWA registration + install prompt
+├── offline.html                           ← Offline fallback page
+└── images/
+    ├── ai_mascot.png                      ← 192×192 (original)
+    ├── ai_mascot_backup.png               ← 1024×1024 (source)
+    └── icons/
+        ├── icon-48x48.png                 ← 48×48
+        ├── icon-72x72.png                 ← 72×72
+        ├── icon-144x144.png               ← 144×144
+        ├── icon-192x192.png               ← 192×192
+        ├── icon-512x512.png               ← 512×512
+        ├── icon-maskable-192x192.png      ← 192×192 (with safe zone padding)
+        ├── icon-maskable-512x512.png      ← 512×512 (with safe zone padding)
+        └── apple-touch-icon.png           ← 180×180 (iOS)
 ```
 
-## Step 5: Test the PWA
+## Regenerating Icons
+
+If you update the mascot image, regenerate all icons from the 1024×1024 source:
+
+```python
+"""Regenerate all PWA icons from ai_mascot_backup.png"""
+from PIL import Image
+import os
+
+src = Image.open('web_game_version/frontend/images/ai_mascot_backup.png').convert('RGBA')
+out_dir = 'web_game_version/frontend/images/icons'
+os.makedirs(out_dir, exist_ok=True)
+
+# Standard icons
+for size in [48, 72, 144, 192, 512]:
+    icon = src.resize((size, size), Image.LANCZOS)
+    icon.save(os.path.join(out_dir, f'icon-{size}x{size}.png'))
+    print(f'icon-{size}x{size}.png')
+
+# Maskable icons (content in inner 80%, background fill)
+for size in [192, 512]:
+    canvas = Image.new('RGBA', (size, size), (106, 17, 203, 255))  # #6a11cb
+    inner = int(size * 0.75)
+    small = src.resize((inner, inner), Image.LANCZOS)
+    offset = (size - inner) // 2
+    canvas.paste(small, (offset, offset), small if small.mode == 'RGBA' else None)
+    canvas.save(os.path.join(out_dir, f'icon-maskable-{size}x{size}.png'))
+    print(f'icon-maskable-{size}x{size}.png')
+
+# Apple touch icon (180x180)
+apple = src.resize((180, 180), Image.LANCZOS)
+apple.save(os.path.join(out_dir, 'apple-touch-icon.png'))
+print('apple-touch-icon.png')
+
+# Favicon
+fav16 = src.resize((16, 16), Image.LANCZOS)
+fav16.save('web_game_version/frontend/favicon.ico', format='ICO', sizes=[(16,16),(32,32),(48,48)])
+print('favicon.ico')
+
+print('\nAll icons regenerated!')
+```
+
+## Testing the PWA
 
 1. Deploy to Render (must be HTTPS for PWA to work)
 2. Open Chrome DevTools → **Application** tab
@@ -111,57 +93,21 @@ web_game_version/frontend/
    - **Installability**: Should show no errors
 4. Click the install icon in Chrome's address bar to install
 
-## Quick Python Script (run from project root)
-
-```python
-"""Generate all PWA icons from ai_mascot.png"""
-import os
-try:
-    from PIL import Image
-except ImportError:
-    print('Install Pillow first: pip install Pillow')
-    exit(1)
-
-src = 'web_game_version/frontend/images/ai_mascot.png'
-out_dir = 'web_game_version/frontend/images/icons'
-os.makedirs(out_dir, exist_ok=True)
-
-img = Image.open(src)
-
-# 512x512 regular icon
-icon512 = img.resize((512, 512), Image.LANCZOS)
-icon512.save(os.path.join(out_dir, 'icon-512x512.png'))
-print('✅ icon-512x512.png')
-
-# 512x512 maskable icon (with padding)
-canvas = Image.new('RGBA', (512, 512), (28, 26, 41, 255))
-mascot = img.resize((360, 360), Image.LANCZOS)
-offset = ((512 - 360) // 2, (512 - 360) // 2)
-try:
-    canvas.paste(mascot, offset, mascot)
-except ValueError:
-    canvas.paste(mascot, offset)
-canvas.save(os.path.join(out_dir, 'icon-maskable-512x512.png'))
-print('✅ icon-maskable-512x512.png')
-
-print('\n🎉 All PWA icons generated! Deploy and test.')
-```
-
 ## Troubleshooting
 
 | Issue | Solution |
 |-------|----------|
-| "No matching service worker detected" | Service worker must be at root (`/sw.js`) and served over HTTPS |
-| "Manifest missing 512x512 icon" | Generate and place `icon-512x512.png` in `images/icons/` |
+| "No matching service worker detected" | SW must be at root (`/sw.js`) and served over HTTPS |
+| "Manifest missing 512x512 icon" | Check `manifest.json` references `images/icons/icon-512x512.png` |
 | App not installable | Ensure HTTPS + valid manifest + SW with fetch handler |
-| Install button not appearing | The `beforeinstallprompt` event only fires when all criteria are met |
-| Icons look cropped on Android | Use the maskable icon with proper safe area padding |
-| Service worker not updating | Bump `CACHE_NAME` version in `sw.js` (e.g., `signify-v2`) |
+| Install button not appearing | `beforeinstallprompt` only fires when all criteria are met |
+| Icons look cropped on Android | Maskable icons have safe area padding built in |
+| Service worker not updating | Bump `CACHE_NAME` version in `sw.js` (currently `signify-v2`) |
 
 ## Cache Management
 
 To update cached content after deploying new code:
 
 1. Open `sw.js`
-2. Change `CACHE_NAME` from `'signify-v1'` to `'signify-v2'`
+2. Change `CACHE_NAME` from `'signify-v2'` to `'signify-v3'` (increment version)
 3. Deploy — the new service worker will activate and purge old caches

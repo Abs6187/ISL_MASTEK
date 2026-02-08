@@ -12,7 +12,7 @@
  * or encounters an error, the app continues to work normally.
  */
 
-var CACHE_NAME = 'signify-v1';
+var CACHE_NAME = 'signify-v2';
 
 var APP_SHELL = [
   '/',
@@ -49,6 +49,15 @@ var APP_SHELL = [
   '/svg/learnbuttonSVG.svg',
   '/svg/playbuttonSVG.svg',
   '/images/ai_mascot.png',
+  '/favicon.ico',
+  '/images/icons/icon-48x48.png',
+  '/images/icons/icon-72x72.png',
+  '/images/icons/icon-144x144.png',
+  '/images/icons/icon-192x192.png',
+  '/images/icons/icon-512x512.png',
+  '/images/icons/icon-maskable-192x192.png',
+  '/images/icons/icon-maskable-512x512.png',
+  '/images/icons/apple-touch-icon.png',
   '/manifest.json',
   '/general.json',
   '/social.json',

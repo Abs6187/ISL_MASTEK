@@ -12,16 +12,40 @@
   "categories": ["education", "games"],
   "icons": [
     {
-      "src": "images/ai_mascot.png",
+      "src": "images/icons/icon-48x48.png",
+      "sizes": "48x48",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "images/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "images/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "images/icons/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "images/ai_mascot.png",
+      "src": "images/icons/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "images/icons/icon-maskable-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "images/icons/icon-maskable-512x512.png",
@@ -35,19 +59,19 @@
       "name": "Learn Signs",
       "short_name": "Learn",
       "url": "/learn.html",
-      "icons": [{ "src": "images/ai_mascot.png", "sizes": "192x192" }]
+      "icons": [{ "src": "images/icons/icon-192x192.png", "sizes": "192x192" }]
     },
     {
       "name": "Play Game",
       "short_name": "Play",
       "url": "/mode.html",
-      "icons": [{ "src": "images/ai_mascot.png", "sizes": "192x192" }]
+      "icons": [{ "src": "images/icons/icon-192x192.png", "sizes": "192x192" }]
     },
     {
       "name": "Take Quiz",
       "short_name": "Quiz",
       "url": "/qm.html",
-      "icons": [{ "src": "images/ai_mascot.png", "sizes": "192x192" }]
+      "icons": [{ "src": "images/icons/icon-192x192.png", "sizes": "192x192" }]
     }
   ]
 }
