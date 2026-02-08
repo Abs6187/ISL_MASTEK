@@ -1,0 +1,9 @@
+flask
+flask-cors
+gunicorn
+opencv-python-headless
+mediapipe>=0.10.0
+numpy
+scikit-learn
+requests
+python-dotenv

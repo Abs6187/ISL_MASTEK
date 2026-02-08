@@ -22,6 +22,14 @@ from utils.webrtc_utils import RTC_CONFIGURATION, MEDIA_STREAM_CONSTRAINTS
 from utils.browser_tts import speak_text
 # Import event loop manager to suppress aioice warnings and configure event loop
 import utils.event_loop_manager
+import logging
+
+logger = logging.getLogger(__name__)
+
+CONFIDENCE_THRESHOLD = 0.5
+
+# Module-level model selection (updated from main thread, read from video processor thread)
+_selected_model = 'standard'
 
 # Initialize session state for model selection
 if 'selected_model' not in st.session_state:
@@ -83,24 +91,62 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # Load pre-trained models
-model_path_42 = os.path.join(os.path.dirname(__file__), '..', 'assets', 'models', 'mlp_model_1.p')
-model_42_dict = pickle.load(open(model_path_42, 'rb'))
-model_42 = model_42_dict['model']
+model_42 = None
+model_84 = None
+try:
+    model_path_42 = os.path.join(os.path.dirname(__file__), '..', 'assets', 'models', 'mlp_model_1.p')
+    with open(model_path_42, 'rb') as f:
+        model_42_dict = pickle.load(f)
+    model_42 = model_42_dict['model']
+    logger.info(f"Loaded model_42: {type(model_42).__name__}, classes: {getattr(model_42, 'classes_', 'N/A')}")
+except Exception as e:
+    logger.error(f"Failed to load mlp_model_1.p: {e}")
+    st.error(f"Failed to load alphabet model 1: {e}")
 
-model_path_84 = os.path.join(os.path.dirname(__file__), '..', 'assets', 'models', 'mlp_model_2.p')
-model_84_dict = pickle.load(open(model_path_84, 'rb'))
-model_84 = model_84_dict['model']
+try:
+    model_path_84 = os.path.join(os.path.dirname(__file__), '..', 'assets', 'models', 'mlp_model_2.p')
+    with open(model_path_84, 'rb') as f:
+        model_84_dict = pickle.load(f)
+    model_84 = model_84_dict['model']
+    logger.info(f"Loaded model_84: {type(model_84).__name__}, classes: {getattr(model_84, 'classes_', 'N/A')}")
+except Exception as e:
+    logger.error(f"Failed to load mlp_model_2.p: {e}")
+    st.error(f"Failed to load alphabet model 2: {e}")
 
 # Try to load advanced H5 model if available
 model_h5 = None
 model_h5_available = False
+h5_input_features = None
+h5_num_classes = None
+h5_labels_dict = None
 try:
     import tensorflow as tf
     h5_model_path = os.path.join(os.path.dirname(__file__), '..', 'assets', 'models', 'sign_language_recognition.h5')
     if os.path.exists(h5_model_path):
         model_h5 = tf.keras.models.load_model(h5_model_path)
-        model_h5_available = True
-except Exception:
+        h5_input_shape = model_h5.input_shape
+        h5_output_shape = model_h5.output_shape
+        logger.info(f"H5 model loaded - input: {h5_input_shape}, output: {h5_output_shape}")
+
+        if len(h5_input_shape) == 2 and h5_input_shape[1] is not None:
+            h5_input_features = h5_input_shape[1]
+            h5_num_classes = h5_output_shape[1] if len(h5_output_shape) == 2 else None
+            if h5_num_classes == 26:
+                h5_labels_dict = {i: chr(65 + i) for i in range(26)}
+            elif h5_num_classes == 36:
+                h5_labels_dict = {i: chr(65 + i) for i in range(26)}
+                h5_labels_dict.update({26 + i: str(i) for i in range(10)})
+            if h5_labels_dict and h5_input_features in (42, 84):
+                model_h5_available = True
+                logger.info(f"H5 model compatible: {h5_input_features} features, {h5_num_classes} classes")
+            else:
+                logger.warning(f"H5 model shape incompatible: {h5_input_features} features, {h5_num_classes} classes")
+                model_h5_available = False
+        else:
+            logger.warning(f"H5 model expects non-landmark input: {h5_input_shape}")
+            model_h5_available = False
+except Exception as e:
+    logger.warning(f"H5 model not available: {e}")
     model_h5_available = False
 
 # Initialize MediaPipe Tasks Hand Landmarker
@@ -160,22 +206,25 @@ class SignAlphabetProcessor(VideoProcessorBase):
         H, W, _ = img.shape
         img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         
-        # Process with MediaPipe Tasks API
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=img_rgb)
-        results = self.landmarker.detect(mp_image)
         
         data_aux = []
         predicted_character = ''
+        confidence = 0.0
         
-        if results.hand_landmarks:
-            for hand_landmarks in results.hand_landmarks:
-                # Draw landmarks manually with cv2
+        try:
+            detection_results = self.landmarker.detect(mp_image)
+        except Exception as e:
+            logger.warning(f"Hand detection error: {e}")
+            return av.VideoFrame.from_ndarray(img, format="bgr24")
+        
+        if detection_results.hand_landmarks:
+            for hand_landmarks in detection_results.hand_landmarks:
                 for landmark in hand_landmarks:
                     x_px = int(landmark.x * W)
                     y_px = int(landmark.y * H)
                     cv2.circle(img, (x_px, y_px), 3, (0, 255, 0), -1)
                 
-                # Extract normalized landmarks
                 x_ = [landmark.x for landmark in hand_landmarks]
                 y_ = [landmark.y for landmark in hand_landmarks]
                 
@@ -183,29 +232,76 @@ class SignAlphabetProcessor(VideoProcessorBase):
                     data_aux.append(x_[i] - min(x_))
                     data_aux.append(y_[i] - min(y_))
             
-            # Model prediction
-            if len(data_aux) == 42:
-                prediction = model_42.predict([np.asarray(data_aux)])
-                predicted_character = labels_dict_42.get(prediction[0], 'Unknown')
-            elif len(data_aux) == 84:
-                prediction = model_84.predict([np.asarray(data_aux)])
-                predicted_character = labels_dict_84.get(prediction[0], 'Unknown')
+            # Try H5 model first if selected and compatible
+            if (_selected_model == 'advanced' and model_h5_available
+                    and model_h5 is not None and h5_input_features == len(data_aux)):
+                try:
+                    features = np.asarray(data_aux).reshape(1, -1)
+                    h5_proba = model_h5.predict(features, verbose=0)
+                    max_idx = int(np.argmax(h5_proba[0]))
+                    confidence = float(h5_proba[0][max_idx])
+                    if confidence >= CONFIDENCE_THRESHOLD and h5_labels_dict:
+                        predicted_character = h5_labels_dict.get(max_idx, '')
+                    logger.debug(f"H5 prediction: idx={max_idx} conf={confidence:.2%}")
+                except Exception as e:
+                    logger.warning(f"H5 prediction failed, falling back to MLP: {e}")
+                    predicted_character = ''
+                    confidence = 0.0
+            
+            # MLP model prediction (primary or fallback from H5)
+            if not predicted_character:
+                target_model = None
+                target_labels = None
+                if len(data_aux) == 42 and model_42 is not None:
+                    target_model = model_42
+                    target_labels = labels_dict_42
+                elif len(data_aux) == 84 and model_84 is not None:
+                    target_model = model_84
+                    target_labels = labels_dict_84
+                else:
+                    logger.debug(f"Unexpected feature count: {len(data_aux)} (expected 42 or 84)")
+                
+                if target_model is not None and target_labels is not None:
+                    try:
+                        features_array = [np.asarray(data_aux)]
+                        if hasattr(target_model, 'predict_proba'):
+                            proba = target_model.predict_proba(features_array)
+                            max_idx = int(np.argmax(proba[0]))
+                            confidence = float(proba[0][max_idx])
+                            if confidence >= CONFIDENCE_THRESHOLD:
+                                predicted_class = target_model.classes_[max_idx]
+                                predicted_character = target_labels.get(int(predicted_class), '')
+                            top_indices = np.argsort(proba[0])[::-1][:3]
+                            top_preds = [
+                                (target_labels.get(int(target_model.classes_[i]), '?'), f"{proba[0][i]:.0%}")
+                                for i in top_indices
+                            ]
+                            logger.debug(f"Top-3: {top_preds} | features={len(data_aux)}")
+                        else:
+                            prediction = target_model.predict(features_array)
+                            predicted_character = target_labels.get(prediction[0], '')
+                            confidence = 1.0
+                    except Exception as e:
+                        logger.warning(f"MLP prediction error: {e}")
+                        predicted_character = ''
             
             if predicted_character and predicted_character != 'Unknown':
                 self.predicted_character = predicted_character
                 
-                # Draw prediction on frame
                 x1, y1 = int(min(x_) * W) - 10, int(min(y_) * H) - 10
-                cv2.putText(img, predicted_character, (x1, y1 - 10),
+                display_text = f"{predicted_character} ({confidence:.0%})"
+                cv2.putText(img, display_text, (x1, y1 - 10),
                           cv2.FONT_HERSHEY_SIMPLEX, 1.3, (0, 255, 0), 3, cv2.LINE_AA)
                 
-                # Speak if new character (with cooldown)
                 current_time = time.time()
                 if (predicted_character != self.last_spoken and 
                     current_time - self.last_speech_time > self.speech_cooldown):
                     self.last_spoken = predicted_character
                     self.last_speech_time = current_time
-                    # Note: Browser TTS will be called from main thread
+            elif confidence > 0 and confidence < CONFIDENCE_THRESHOLD:
+                x1, y1 = int(min(x_) * W) - 10, int(min(y_) * H) - 10
+                cv2.putText(img, f"? ({confidence:.0%})", (x1, y1 - 10),
+                          cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 255), 2, cv2.LINE_AA)
         
         # Convert back to av.VideoFrame
         return av.VideoFrame.from_ndarray(img, format="bgr24")
@@ -215,12 +311,13 @@ class SignAlphabetProcessor(VideoProcessorBase):
 col_model, col_clear = st.columns([3, 1])
 with col_model:
     current_model = st.session_state.get('selected_model', 'standard')
+    _selected_model = current_model
     if current_model == 'advanced' and model_h5_available:
         st.success("🧠 Using: **Advanced H5 Model**")
     elif current_model == 'advanced' and not model_h5_available:
         st.warning("⚠️ Advanced model not available, using Standard MLP")
     else:
-        st.info("🧠 Using: **Standard MLP Model**")
+        st.info(f"🧠 Using: **Standard MLP Model** (confidence threshold: {CONFIDENCE_THRESHOLD:.0%})")
 
 with col_clear:
     if st.button("🗑️ Clear", key="clear_alphabet", help="Clear recognition state and audio cache"):
