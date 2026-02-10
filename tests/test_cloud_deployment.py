@@ -192,6 +192,59 @@ class TestDeploymentConfigs:
                 content = f.read()
                 assert 'venv' in content, "venv not in .gitignore"
 
+class TestBotpressIntegration:
+    """Test Botpress webchat is integrated in all web game HTML pages"""
+    
+    BOTPRESS_INJECT = 'https://cdn.botpress.cloud/webchat/v3.5/inject.js'
+    BOTPRESS_CONFIG = 'https://files.bpcontent.cloud/2026/02/10/09/20260210091540-921XKCX3.js'
+    
+    def _get_html_files(self):
+        base_dir = os.path.dirname(os.path.dirname(__file__))
+        frontend_dir = os.path.join(base_dir, 'web_game_version', 'frontend')
+        html_files = []
+        if os.path.exists(frontend_dir):
+            for f in os.listdir(frontend_dir):
+                if f.endswith('.html'):
+                    html_files.append(os.path.join(frontend_dir, f))
+        return html_files
+    
+    def test_botpress_inject_script_present(self):
+        """Verify Botpress inject.js is included in every HTML page"""
+        html_files = self._get_html_files()
+        assert len(html_files) > 0, "No HTML files found in web_game_version/frontend"
+        
+        for filepath in html_files:
+            with open(filepath, 'r', encoding='utf-8') as f:
+                content = f.read()
+            assert self.BOTPRESS_INJECT in content, (
+                f"{os.path.basename(filepath)} is missing Botpress inject script"
+            )
+    
+    def test_botpress_config_script_present(self):
+        """Verify Botpress bot config script is included in every HTML page"""
+        html_files = self._get_html_files()
+        assert len(html_files) > 0, "No HTML files found in web_game_version/frontend"
+        
+        for filepath in html_files:
+            with open(filepath, 'r', encoding='utf-8') as f:
+                content = f.read()
+            assert self.BOTPRESS_CONFIG in content, (
+                f"{os.path.basename(filepath)} is missing Botpress config script"
+            )
+    
+    def test_botpress_scripts_before_body_close(self):
+        """Verify Botpress scripts appear before </body>"""
+        html_files = self._get_html_files()
+        for filepath in html_files:
+            with open(filepath, 'r', encoding='utf-8') as f:
+                content = f.read()
+            inject_pos = content.find(self.BOTPRESS_INJECT)
+            body_close_pos = content.find('</body>')
+            assert inject_pos < body_close_pos, (
+                f"{os.path.basename(filepath)}: Botpress scripts must appear before </body>"
+            )
+
+
 class TestWebGameVersion:
     """Test web game version"""
     
