@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Block non-page API endpoints from crawling
+Disallow: /predict
+Disallow: /ask_ai
+Disallow: /healthz
+
+Sitemap: https://isl-mastek.onrender.com/sitemap.xml

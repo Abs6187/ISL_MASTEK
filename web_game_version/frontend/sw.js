@@ -12,7 +12,7 @@
  * or encounters an error, the app continues to work normally.
  */
 
-var CACHE_NAME = 'signify-v2';
+var CACHE_NAME = 'signify-v3';
 
 var APP_SHELL = [
   '/',
@@ -63,8 +63,11 @@ var APP_SHELL = [
   '/social.json',
   '/sports.json',
   '/tech.json',
+  '/math.json',
+  '/school.json',
+  '/workplace.json',
+  '/public.json',
   '/settings.json',
-  '/js/math.json',
   '/qm.js'
 ];
 

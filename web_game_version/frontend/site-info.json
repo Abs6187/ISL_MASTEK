@@ -1,0 +1,157 @@
+{
+  "projectName": "Signify",
+  "repoName": "bidirectional-indian-sign-language",
+  "tagline": "Learn Indian Sign Language (ISL) and bridge communication gaps through translation tools and a gamified web experience.",
+  "purpose": "Built to help bridge communication gaps for the Deaf/Hard-of-Hearing community in India, providing ISL learning and bidirectional translation utilities.",
+  "canonicalLinks": {
+    "webGame": "https://isl-mastek.onrender.com/",
+    "streamlitTranslator": "https://isl-mastek.streamlit.app/"
+  },
+  "apps": [
+    {
+      "name": "Signify Web Game (PWA)",
+      "baseUrl": "https://isl-mastek.onrender.com/",
+      "whatItIs": "A static frontend + Flask backend web app (PWA) for learning ISL using interactive learning, quizzes, and play modes.",
+      "notes": [
+        "Leaderboards are stored in the user's browser (local storage).",
+        "The app can be installed as a PWA in supported browsers."
+      ],
+      "pages": [
+        {
+          "path": "/",
+          "file": "index.html",
+          "title": "Home",
+          "description": "Entry point with navigation to Learn, Quiz, and Play, plus leaderboards."
+        },
+        {
+          "path": "/learn.html",
+          "file": "learn.html",
+          "title": "Learn",
+          "description": "Learning section that shows signs for letters/words (practice-focused)."
+        },
+        {
+          "path": "/qm.html",
+          "file": "qm.html",
+          "title": "Quiz (Menu)",
+          "description": "Quiz entry/selection page that leads into quiz experience."
+        },
+        {
+          "path": "/quiz.html",
+          "file": "quiz.html",
+          "title": "Quiz",
+          "description": "Interactive quiz to test recognition of ISL letters/numbers."
+        },
+        {
+          "path": "/mode.html",
+          "file": "mode.html",
+          "title": "Play (Mode Selection)",
+          "description": "Play area entry where the user selects a game mode/category."
+        },
+        {
+          "path": "/single.html",
+          "file": "single.html",
+          "title": "Play (Single / Game Screen)",
+          "description": "Core play screen used for interactive practice/game flows."
+        },
+        {
+          "path": "/examples.html",
+          "file": "examples.html",
+          "title": "Developer Examples",
+          "description": "Shows example requests and explains backend prediction API usage at a high level."
+        },
+        {
+          "path": "/faqs.html",
+          "file": "faqs.html",
+          "title": "FAQs",
+          "description": "Frequently asked questions about Signify and how the web game works."
+        },
+        {
+          "path": "/about.html",
+          "file": "about.html",
+          "title": "About",
+          "description": "About the project, purpose, and the team/event context."
+        },
+        {
+          "path": "/contact.html",
+          "file": "contact.html",
+          "title": "Contact",
+          "description": "Contact/credits page listing the team members and mentor."
+        },
+        {
+          "path": "/offline.html",
+          "file": "offline.html",
+          "title": "Offline",
+          "description": "Fallback page shown when offline (PWA support)."
+        }
+      ],
+      "backend": {
+        "type": "Flask",
+        "apiEndpoints": [
+          {
+            "method": "POST",
+            "path": "/predict",
+            "description": "Takes a base64 image and returns predicted sign (letter/number) with confidence.",
+            "bodyExample": {
+              "image": "data:image/jpeg;base64,...",
+              "category": "general"
+            }
+          },
+          {
+            "method": "POST",
+            "path": "/ask_ai",
+            "description": "Optional AI helper for short hints/facts (requires PERPLEXITY_API_KEY).",
+            "bodyExample": { "word": "apple" }
+          },
+          {
+            "method": "GET",
+            "path": "/healthz",
+            "description": "Health check endpoint used by hosting platforms."
+          }
+        ],
+        "privacyNote": "The web game captures camera input in the browser and sends frames to /predict for recognition (no server-side camera access required)."
+      }
+    },
+    {
+      "name": "Streamlit Translator App",
+      "baseUrl": "https://isl-mastek.streamlit.app/",
+      "whatItIs": "A Streamlit app providing translation utilities (speech-to-sign, text-to-sign) and real-time recognition workflows.",
+      "notableFeatures": [
+        "Speech-to-sign and text-to-sign flows for basic letters/digits.",
+        "Supports gTTS for audio output and can be extended for Indian languages."
+      ]
+    }
+  ],
+  "credits": {
+    "event": {
+      "name": "Mastek DeepBlue Season 11",
+      "url": "https://deepblue.co.in/",
+      "problemStatement": "Bridging Communication Gaps for the Hearing-Impaired in India"
+    },
+    "team": {
+      "name": "HII_1",
+      "mentor": "Sucheta Ranade",
+      "members": [
+        {
+          "name": "Abhay Gupta",
+          "linkedin": "https://in.linkedin.com/in/abhay-gupta-197b17264"
+        },
+        {
+          "name": "Bhumika Patel",
+          "linkedin": "https://www.linkedin.com/in/bhumika-patel-ml/"
+        },
+        {
+          "name": "Kripanshu Gupta",
+          "linkedin": "https://in.linkedin.com/in/kripanshu-gupta-a66349261/"
+        },
+        {
+          "name": "Dipanshu Patel",
+          "linkedin": "https://www.linkedin.com/in/dipanshu-patel-080513243/"
+        }
+      ]
+    }
+  },
+  "seo": {
+    "robotsTxt": "/robots.txt",
+    "sitemapXml": "/sitemap.xml"
+  }
+}
