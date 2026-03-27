@@ -1,15 +1,17 @@
 # Bidirectional Indian Sign Language Recognition
 
 A comprehensive system for translating Indian Sign Language (ISL) to speech/text and vice-versa, featuring a gamified learning module.
+## Demo
 
-## 🚀 Features
+[![Watch the Demo](https://img.youtube.com/vi/TAf5Z4fR3uI/maxresdefault.jpg)](https://youtu.be/TAf5Z4fR3uI)
+##  Features
 
 *   **Sign Alphabet & Number Recognition**: Real-time detection of ISL signs using `mediapipe` and `scikit-learn`.
 *   **Speech-to-Sign**: Converts spoken English into ISL sign animations.
 *   **Text-to-Sign**: Visualizes typed text as ISL gestures.
 *   **Gamified Learning**: A web-based game to learn and practice ISL signs with quizzes and leaderboards.
 
-## 🛠️ Installation & Setup
+## Installation & Setup
 
 **Prerequisites**:
 *   **Python 3.11** (Required strictly for compatibility)
@@ -35,7 +37,7 @@ pip install -r requirements.txt
 
 ---
 
-## 🏃‍♂️ Usage
+##  Usage
 
 > **IMPORTANT**: Always run commands using `.\venv311\Scripts\python` to ensure you are using the correct environment. Using just `python` might use the wrong system version.
 
@@ -57,7 +59,7 @@ This launches the gamified learning platform.
 
 ---
 
-## 👨‍💻 Developer Resources
+## Developer Resources
 
 ### Project Structure
 *   `streamlit-version/`: Contains the main translation application code.
@@ -80,7 +82,7 @@ The Flask server exposes a prediction endpoint:
 
 ---
 
-## 👥 Credits
+## Credits
 
 This project was created for **Mastek DeepBlue Season 11** ([https://deepblue.co.in/](https://deepblue.co.in/)) to address the problem statement: **"Bridging Communication Gaps for the Hearing-Impaired in India"**.
 
