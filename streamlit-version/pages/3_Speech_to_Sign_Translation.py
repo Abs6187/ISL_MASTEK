@@ -337,7 +337,7 @@ if not SPEECH_RECOGNITION_AVAILABLE:
     </script>
     """
     
-    components.html(speech_html, height=250)
+    st.html(speech_html)
     
     # Streamlit button to use the detected letter
     voice_letter = st.text_input("Detected letter (copy from above or type):", key="voice_letter", max_chars=1).upper()

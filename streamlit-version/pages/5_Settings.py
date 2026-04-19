@@ -182,15 +182,15 @@ st.info("⚠️ **Fallback option** - Uses browser's built-in TTS, may not work 
 
 # Use components.html() for complex HTML with JavaScript (renders in iframe)
 browser_tts_html = """
-<!DOCTYPE html>
-<html>
-<head>
+<div id="browser-tts-wrapper">
     <style>
-        body {
+        #browser-tts-wrapper {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
             background: #0E1117;
             margin: 0;
             padding: 10px;
+            border-radius: 10px;
+            border: 1px solid #333;
         }
         .tts-container {
             max-width: 100%;
@@ -307,8 +307,6 @@ browser_tts_html = """
             font-size: 13px;
         }
     </style>
-</head>
-<body>
     <div class="tts-container">
         <h3>🔊 Browser Text-to-Speech Settings</h3>
         <p class="subtitle">Configure voice, speed, pitch, and volume</p>
@@ -475,12 +473,11 @@ browser_tts_html = """
             document.getElementById('speak-btn').disabled = true;
         }
     </script>
-</body>
-</html>
+</div>
 """
 
-# Render the HTML in an iframe using components.html()
-components.html(browser_tts_html, height=750, scrolling=True)
+# Render the HTML using st.html
+st.html(browser_tts_html)
 
 st.markdown("---")
 

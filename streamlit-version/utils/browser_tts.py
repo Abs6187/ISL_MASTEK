@@ -271,8 +271,8 @@ def speak_text_browser(text: str, rate: float = 1.0, pitch: float = 1.0, volume:
     </html>
     """
     
-    # Render with zero height (invisible)
-    components.html(html_code, height=0)
+    # Render with st.html (invisible)
+    st.html(html_code)
 
 
 def speak_text(text: str, rate: float = 1.0, pitch: float = 1.0, volume: float = 1.0):
@@ -307,7 +307,7 @@ def stop_speech():
         }
     </script>
     """
-    components.html(html_code, height=0)
+    st.html(html_code)
 
 
 def is_gtts_available():
