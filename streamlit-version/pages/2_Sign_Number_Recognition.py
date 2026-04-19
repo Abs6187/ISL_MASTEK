@@ -9,8 +9,9 @@ import warnings
 from streamlit_webrtc import webrtc_streamer, VideoProcessorBase
 import av
 import time
-from mediapipe.tasks import python
-from mediapipe.tasks.python import vision
+# Use classic mp.solutions.hands API (no EGL/libGLES dependency)
+mp_hands = mp.solutions.hands
+mp_drawing = mp.solutions.drawing_utils
 
 # Suppress warnings
 warnings.filterwarnings('ignore', category=UserWarning)
@@ -145,16 +146,7 @@ except Exception as e:
     logger.warning(f"H5 model not available: {e}")
     model_h5_available = False
 
-# Initialize MediaPipe Tasks Hand Landmarker
-model_path_task = os.path.join(os.path.dirname(__file__), '..', 'assets', 'models', 'hand_landmarker.task')
-base_options = python.BaseOptions(model_asset_path=model_path_task)
-hand_landmarker_options = vision.HandLandmarkerOptions(
-    base_options=base_options,
-    running_mode=vision.RunningMode.IMAGE,
-    num_hands=2,
-    min_hand_detection_confidence=0.3,
-    min_hand_presence_confidence=0.3
-)
+# Hand landmarker options for the classic API (used per-processor instance)
 
 # Labels dictionary for gestures
 labels_dict = {0: '1', 1: '2', 2: '3', 3: '4', 4: '5', 5: '6', 6: '7', 7: '8', 8: '9', 9: '0'}
@@ -167,7 +159,13 @@ class SignNumberProcessor(VideoProcessorBase):
     """
     
     def __init__(self):
-        self.landmarker = vision.HandLandmarker.create_from_options(hand_landmarker_options)
+        # Use classic mp.solutions.hands - no EGL/GPU dependency
+        self.hands = mp_hands.Hands(
+            static_image_mode=True,
+            max_num_hands=2,
+            min_detection_confidence=0.3,
+            min_tracking_confidence=0.3
+        )
         self.predicted_number = ""
         self.last_spoken = None
         self.last_speech_time = 0
@@ -176,10 +174,9 @@ class SignNumberProcessor(VideoProcessorBase):
     def __del__(self):
         """Cleanup MediaPipe resources when processor is destroyed"""
         try:
-            if hasattr(self, 'landmarker') and self.landmarker:
-                self.landmarker.close()
+            if hasattr(self, 'hands') and self.hands:
+                self.hands.close()
         except Exception:
-            # Ignore cleanup errors - they're non-critical
             pass
     
     def recv(self, frame: av.VideoFrame) -> av.VideoFrame:
@@ -201,29 +198,24 @@ class SignNumberProcessor(VideoProcessorBase):
         H, W, _ = img.shape
         img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         
-        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=img_rgb)
-        
         data_aux = []
         predicted_character = ''
         confidence = 0.0
         
         try:
-            detection_results = self.landmarker.detect(mp_image)
+            detection_results = self.hands.process(img_rgb)
         except Exception as e:
             logger.warning(f"Hand detection error: {e}")
             return av.VideoFrame.from_ndarray(img, format="bgr24")
         
-        if detection_results.hand_landmarks:
-            for hand_landmarks in detection_results.hand_landmarks:
-                for landmark in hand_landmarks:
-                    x_px = int(landmark.x * W)
-                    y_px = int(landmark.y * H)
-                    cv2.circle(img, (x_px, y_px), 3, (0, 255, 0), -1)
+        if detection_results.multi_hand_landmarks:
+            for hand_landmarks in detection_results.multi_hand_landmarks:
+                mp_drawing.draw_landmarks(img, hand_landmarks, mp_hands.HAND_CONNECTIONS)
                 
-                x_ = [landmark.x for landmark in hand_landmarks]
-                y_ = [landmark.y for landmark in hand_landmarks]
+                x_ = [lm.x for lm in hand_landmarks.landmark]
+                y_ = [lm.y for lm in hand_landmarks.landmark]
                 
-                for i in range(len(hand_landmarks)):
+                for i in range(len(hand_landmarks.landmark)):
                     data_aux.append(x_[i] - min(x_))
                     data_aux.append(y_[i] - min(y_))
             
