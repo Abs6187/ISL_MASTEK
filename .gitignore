@@ -27,8 +27,10 @@ Thumbs.db
 
 # Project specific
 *.log
+logs-*.txt
 .env
 .gemini/
 brain/
 research_paper/
 nul
+.zed/

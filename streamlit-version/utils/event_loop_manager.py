@@ -96,13 +96,14 @@ def configure_event_loop_policy():
     
     # Get or create event loop and set custom exception handler
     try:
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
     except RuntimeError:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
     
     # Set custom exception handler to suppress aioice errors
-    loop.set_exception_handler(custom_exception_handler)
+    if loop is not None and not loop.is_closed():
+        loop.set_exception_handler(custom_exception_handler)
 
 
 class WebRTCConnectionManager:

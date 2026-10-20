@@ -143,7 +143,7 @@ try:
             logger.warning(f"H5 model expects non-landmark input: {h5_input_shape}")
             model_h5_available = False
 except Exception as e:
-    logger.warning(f"H5 model not available: {e}")
+    logger.debug(f"H5 model not available: {e}")
     model_h5_available = False
 
 # Hand landmarker options for the classic API (used per-processor instance)
