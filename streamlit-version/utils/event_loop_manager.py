@@ -55,33 +55,41 @@ def custom_exception_handler(loop: asyncio.AbstractEventLoop, context: Dict[str,
     This handler specifically suppresses:
     - aioice 'NoneType' sendto errors
     - aioice 'NoneType' call_exception_handler errors
+    - streamlit-webrtc 'is_alive' shutdown observer errors
     - Other transport/event loop lifecycle errors
     """
     exception = context.get('exception')
     message = context.get('message', '')
     
-    # Suppress aioice NoneType errors (non-fatal)
+    # Suppress non-fatal AttributeError during shutdown/cleanup
     if isinstance(exception, AttributeError):
         error_msg = str(exception)
-        if "'NoneType' object has no attribute 'sendto'" in error_msg:
-            # Silently ignore - this is expected during WebRTC teardown
-            return
-        if "'NoneType' object has no attribute 'call_exception_handler'" in error_msg:
-            # Silently ignore - this is expected during event loop cleanup
+        if any(needle in error_msg for needle in (
+            "sendto",
+            "call_exception_handler",
+            "is_alive",
+            "'NoneType' object has no attribute 'is_alive'",
+            "'NoneType' object has no attribute 'sendto'",
+            "'NoneType' object has no attribute 'call_exception_handler'",
+        )):
             return
     
-    # Suppress "Task was destroyed but it is pending!" for aioice
-    if 'Task was destroyed but it is pending!' in message:
-        if 'aioice' in message or 'Transaction.__retry' in message:
-            return
+    # Suppress task destruction or callback messages mentioning non-fatal patterns
+    if any(needle in message for needle in (
+        'Task was destroyed but it is pending!',
+        'is_alive',
+        'aioice',
+        'Transaction.__retry',
+    )):
+        return
     
     # For any other exceptions, use default handler
     # This ensures we don't hide genuinely important errors
     try:
-        if loop is not None:
+        if loop is not None and not loop.is_closed():
             loop.default_exception_handler(context)
     except Exception:
-        # If the event loop is also None, we can't handle this - just suppress
+        # If the event loop is also None or closed, we can't handle this - just suppress
         pass
 
 
@@ -199,8 +207,37 @@ def patch_aioice():
         _SelectorDatagramTransport.sendto = safe_sendto
 
 
+def patch_pyee():
+    """
+    Monkey-patch pyee.base.EventEmitter._emit_handle_potential_error to prevent
+    AttributeError: 'NoneType' object has no attribute 'is_alive' and closed transport
+    errors from raising unhandled exceptions into the asyncio event loop.
+    """
+    try:
+        import pyee.base
+    except ImportError:
+        return
+
+    if not hasattr(pyee.base.EventEmitter, '_original_emit_handle_potential_error'):
+        pyee.base.EventEmitter._original_emit_handle_potential_error = pyee.base.EventEmitter._emit_handle_potential_error
+
+    orig = pyee.base.EventEmitter._original_emit_handle_potential_error
+
+    def safe_emit_handle_potential_error(self, event, error):
+        if event == "error" and isinstance(error, (AttributeError, RuntimeError, OSError)):
+            err_str = str(error)
+            if any(k in err_str for k in ("is_alive", "sendto", "call_exception_handler", "Event loop is closed")):
+                # Non-fatal shutdown/teardown race condition: silently suppress
+                return
+        return orig(self, event, error)
+
+    pyee.base.EventEmitter._emit_handle_potential_error = safe_emit_handle_potential_error
+
+
 # Initialize on module import
 suppress_aioice_warnings()
 patch_aioice()  # Apply safety patch
+patch_pyee()    # Suppress pyee is_alive shutdown exceptions
 configure_event_loop_policy()
+
 

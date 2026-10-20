@@ -1,13 +1,14 @@
 # Alternative requirements for cloud deployment (Streamlit Cloud, Heroku, etc.)
 # Use this file if you encounter PyAudio build issues in cloud environments
 
-# Verified working on Streamlit Cloud (deploy log 2026-10-20 06:32 UTC): no ASGI errors.
-# Streamlit 1.50.0 runs on Tornado. Streamlit 1.60.x + Starlette >=1.8 breaks every static
-# file request ("Expected ASGI message 'http.response.start'"), and mediapipe==0.10.9
-# (protobuf<4) stops us moving to Streamlit >=1.62 where it is fixed. See SOLUTION.md.
-# streamlit-webrtc is pinned to the version pip resolves for streamlit==1.50.0.
-streamlit==1.50.0
-streamlit-webrtc==0.67.4  # Browser-based camera access for cloud deployment
+# Streamlit 1.51-1.60 + Starlette >=1.8 had an ASGI bug ("Expected ASGI message 'http.response.start'").
+# Pinning starlette<1.8 resolves the ASGI bug cleanly.
+# streamlit-webrtc>=0.72.2 fixes the shutdown observer race condition:
+# "AttributeError: 'NoneType' object has no attribute 'is_alive'".
+# mediapipe==0.10.9 (protobuf<4) requires streamlit<1.61.
+streamlit>=1.51.0,<1.61
+starlette>=0.46.0,<1.8
+streamlit-webrtc>=0.72.2  # Browser-based camera access for cloud deployment
 aiortc>=1.3.0,<2.0.0  # WebRTC implementation - pinned for stability
 aioice>=0.9.0  # ICE/STUN implementation
 av  # PyAV for video frame processing

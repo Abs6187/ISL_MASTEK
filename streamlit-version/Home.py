@@ -1,5 +1,16 @@
+import os
+import sys
 import streamlit as st
 import warnings
+
+# Ensure utils package is importable and lifecycle patches (pyee, aioice, asyncio) are active
+_app_dir = os.path.dirname(os.path.abspath(__file__))
+if _app_dir not in sys.path:
+    sys.path.insert(0, _app_dir)
+try:
+    import utils.event_loop_manager
+except Exception:
+    pass
 
 # Suppress warnings
 warnings.filterwarnings('ignore', category=UserWarning)

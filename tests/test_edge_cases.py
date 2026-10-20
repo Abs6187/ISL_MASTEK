@@ -121,5 +121,27 @@ class TestBrowserTTSEdgeCases:
         safe_send_stun(protocol, "msg", "addr")
         assert protocol.called_original is True
 
+    def test_custom_exception_handler_suppresses_is_alive(self):
+        """Test custom_exception_handler ignores is_alive AttributeError"""
+        loop = MagicMock()
+        context = {
+            "message": "Exception in callback AsyncIOEventEmitter._emit_run.<locals>.callback",
+            "exception": AttributeError("'NoneType' object has no attribute 'is_alive'")
+        }
+        event_loop_manager.custom_exception_handler(loop, context)
+        # Should NOT call default_exception_handler because it was suppressed
+        loop.default_exception_handler.assert_not_called()
+
+    def test_patch_pyee_suppresses_is_alive(self):
+        """Test pyee monkey-patch suppresses is_alive error event without re-raising"""
+        import pyee.base
+        ee = pyee.base.EventEmitter()
+        # Should not raise exception
+        try:
+            ee.emit("error", AttributeError("'NoneType' object has no attribute 'is_alive'"))
+        except AttributeError:
+            pytest.fail("is_alive error was not suppressed by patch_pyee")
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
