@@ -67,42 +67,52 @@ Checked by running Streamlit's real `SelectiveGZipMiddleware` against a mock app
   that run before it finished, so the full set of failing URLs was not captured.
 - I confirmed with `uv pip compile` that `streamlit>=1.62` + `mediapipe==0.10.9` is unsatisfiable.
 
-## Fix applied
+## Fix applied (proven by the second deploy log)
 
-Pin Starlette below the breaking release and keep Streamlit in the range that works with mediapipe 0.10.9.
-The same change is in both `requirements.txt` and `requirements-cloud.txt`:
+The second log (`...06_52_12...txt`) covers a redeploy at 06:32 UTC of commit `9808dc3`, which pinned
+`streamlit==1.50.0`. That redeploy:
+
+- swapped `streamlit` 1.60.0 -> **1.50.0** (Tornado server, no Starlette gzip middleware) and
+  `streamlit-webrtc` 0.79.0 -> **0.67.4**;
+- shows **no `Exception in ASGI application` after the swap** (the two 500s on `/favicon.png` at
+  06:32:04 and 06:32:07 are the old process still serving while packages were replaced, right before
+  `Shutting down` / `Updated app!`);
+- shows a MediaPipe session running at 06:50 (`Created TensorFlow Lite XNNPACK delegate for CPU`).
+
+So the final pins, in both `requirements.txt` and `requirements-cloud.txt`, are the configuration observed
+working:
 
 ```text
-streamlit>=1.51.0,<1.61
-starlette>=0.46.0,<1.8
+streamlit==1.50.0
+streamlit-webrtc==0.67.4
 ```
 
-Why this pair:
+`streamlit-webrtc` is pinned to 0.67.4 because that is what pip resolved for Streamlit 1.50.0: every
+recent `streamlit-webrtc` (including 0.79.0 from the first log) requires `streamlit>=1.51`. Leaving it as
+`>=0.47.0` meant the resolver silently chose an old release. 0.67.4 needs `aiortc>=1.14.0` and
+`aioice>=0.10.1`, which fit the existing `aiortc>=1.3.0,<2.0.0` and `aioice>=0.9.0` specs.
 
-- `streamlit<1.61` stays within the versions that can coexist with `protobuf<4`. Streamlit 1.51 to 1.60
-  all accept `protobuf>=3.20`.
-- `starlette<1.8` avoids the changed gzip internals.
-- `streamlit>=1.51.0` keeps it compatible with `streamlit-webrtc` 0.79.0, which requires
-  `streamlit>=1.51.0`.
+### Alternative that was tried and replaced
 
-Earlier in this session both files pinned `streamlit==1.50.0`. That avoids the bug, but every recent
-`streamlit-webrtc` (including 0.79.0 from your log) requires `streamlit>=1.51`. pip would have silently
-downgraded `streamlit-webrtc` to an old release, so I replaced that pin.
+Commit `e4a2a4d` (`streamlit>=1.51.0,<1.61` + `starlette>=0.46.0,<1.8`) is based on the middleware tests
+above and should also avoid the crash, but it has **no deploy log showing it working**, and it moves the
+app back to Streamlit 1.60.x + `streamlit-webrtc` 0.79.0. Since 1.50.0 is proven in production, the files now
+use that. If you want to move to 1.60.x later, that Starlette pin is the way to do it.
 
 ## What you need to do
 
-1. Commit and push `requirements.txt` and `requirements-cloud.txt`.
-2. In Streamlit Community Cloud, open **Manage app → Reboot app** (the log shows dependencies are installed
-   from `requirements.txt`).
-3. Check the new log for the `Installed ... starlette==1.7.x` (or older) line and no more
+1. Commit and push `requirements.txt`, `requirements-cloud.txt` and this file.
+2. Reboot the app in Streamlit Community Cloud (**Manage app -> Reboot app**).
+3. Check the new log for `streamlit==1.50.0` / `streamlit-webrtc==0.67.4` and no
    `Exception in ASGI application`.
 
 ## Not verified
 
-- I did not run the full app against the new pin, and I did not redeploy. The pin is backed by the
-  middleware reproduction and the dependency metadata, not by a finished end-to-end run.
-- I did not check that Streamlit 1.51 to 1.59 are free of other bugs. The log only shows 1.60.0.
-  Because the range is `>=1.51.0,<1.61`, pip will normally pick 1.60.0, the version in your log.
+- The 1.50.0 result comes from your log, not from my own run. I did not install anything locally.
+- The log has no entries after 06:50, so it doesn't show every page (for example Speech-to-Sign or
+  Camera Test) being opened after the swap.
+- `streamlit-elements` was removed from `requirements.txt` in `9808dc3`. A search of the Python sources
+  found no imports of it, so nothing should break, but I did not run every page.
 
 ## Other messages in the log (not errors)
 
