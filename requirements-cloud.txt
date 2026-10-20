@@ -1,7 +1,11 @@
 # Alternative requirements for cloud deployment (Streamlit Cloud, Heroku, etc.)
 # Use this file if you encounter PyAudio build issues in cloud environments
 
-streamlit==1.50.0
+# mediapipe==0.10.9 needs protobuf<4, which caps Streamlit at 1.60.x.
+# Streamlit 1.60.x breaks with Starlette >=1.8 (every static file request fails with
+# "Expected ASGI message 'http.response.start'"), so Starlette is pinned below 1.8.
+streamlit>=1.51.0,<1.61
+starlette>=0.46.0,<1.8
 streamlit-webrtc>=0.47.0  # Browser-based camera access for cloud deployment
 aiortc>=1.3.0,<2.0.0  # WebRTC implementation - pinned for stability
 aioice>=0.9.0  # ICE/STUN implementation
